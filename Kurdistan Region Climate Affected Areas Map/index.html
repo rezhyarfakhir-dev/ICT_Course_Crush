@@ -63,6 +63,8 @@
 
     .panel-collapsible {
       padding: 0;
+      display: flex;
+      flex-direction: column-reverse;
     }
 
     .panel-toggle {
@@ -101,6 +103,17 @@
 
     .panel-content {
       padding: 18px;
+      border-bottom: 1px solid rgba(23, 33, 43, 0.08);
+    }
+
+    .dock > .panel {
+      position: relative;
+      top: auto;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      width: 100%;
+      max-width: 100%;
     }
 
     .header {

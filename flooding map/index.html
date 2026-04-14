@@ -53,6 +53,8 @@
       padding: 0;
       overflow: hidden;
       background: var(--panel-strong);
+      display: flex;
+      flex-direction: column-reverse;
     }
 
     .panel-toggle {
@@ -85,7 +87,7 @@
 
     .panel-content {
       padding: 14px;
-      border-top: 1px solid rgba(20, 32, 42, 0.08);
+      border-bottom: 1px solid rgba(20, 32, 42, 0.08);
       max-height: min(52vh, 460px);
       overflow: auto;
     }
@@ -98,6 +100,16 @@
       width: min(410px, calc(100vw - 36px));
       display: grid;
       gap: 10px;
+    }
+
+    .dock > .panel {
+      position: relative;
+      top: auto;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      width: 100%;
+      max-width: 100%;
     }
 
     .header {
