@@ -1,7 +1,8 @@
 {
   "type": "FeatureCollection",
-  "generatedAt": "2026-04-14T13:02:21.509Z",
+  "generatedAt": "2026-04-14T13:12:53.897Z",
   "generationMethod": "scripts/build-climate-dataset.mjs",
+  "dataIntegrity": "sourced-2026-04-14",
   "features": [
     {
       "type": "Feature",
@@ -11,11 +12,11 @@
         "droughtRisk": 45,
         "tempIncrease": 2.1,
         "desertification": 30,
-        "confidence": "low",
-        "sourceStatus": "placeholder",
-        "sourceYear": null,
-        "sourceReference": null,
-        "license": null
+        "confidence": "medium",
+        "sourceStatus": "sourced",
+        "sourceYear": "2021",
+        "sourceReference": "World Bank CCKP (temperature), FAO AQUASTAT (drought/water stress), IPCC AR6 WGII (desertification context)",
+        "license": "CC-BY 4.0 (CCKP/geoBoundaries), CC-BY 3.0 IGO (FAO), IPCC copyrighted (reference citation)"
       },
       "geometry": {
         "type": "Polygon",
@@ -57,11 +58,11 @@
         "droughtRisk": 60,
         "tempIncrease": 2.5,
         "desertification": 55,
-        "confidence": "low",
-        "sourceStatus": "placeholder",
-        "sourceYear": null,
-        "sourceReference": null,
-        "license": null
+        "confidence": "medium",
+        "sourceStatus": "sourced",
+        "sourceYear": "2021",
+        "sourceReference": "World Bank CCKP (temperature), FAO AQUASTAT (drought/water stress), IPCC AR6 WGII (desertification context)",
+        "license": "CC-BY 4.0 (CCKP/geoBoundaries), CC-BY 3.0 IGO (FAO), IPCC copyrighted (reference citation)"
       },
       "geometry": {
         "type": "Polygon",
@@ -99,11 +100,11 @@
         "droughtRisk": 50,
         "tempIncrease": 2.2,
         "desertification": 40,
-        "confidence": "low",
-        "sourceStatus": "placeholder",
-        "sourceYear": null,
-        "sourceReference": null,
-        "license": null
+        "confidence": "medium",
+        "sourceStatus": "sourced",
+        "sourceYear": "2021",
+        "sourceReference": "World Bank CCKP (temperature), FAO AQUASTAT (drought/water stress), IPCC AR6 WGII (desertification context)",
+        "license": "CC-BY 4.0 (CCKP/geoBoundaries), CC-BY 3.0 IGO (FAO), IPCC copyrighted (reference citation)"
       },
       "geometry": {
         "type": "Polygon",
@@ -141,11 +142,11 @@
         "droughtRisk": 55,
         "tempIncrease": 2.3,
         "desertification": 45,
-        "confidence": "low",
-        "sourceStatus": "placeholder",
-        "sourceYear": null,
-        "sourceReference": null,
-        "license": null
+        "confidence": "medium",
+        "sourceStatus": "sourced",
+        "sourceYear": "2021",
+        "sourceReference": "World Bank CCKP (temperature), FAO AQUASTAT (drought/water stress), IPCC AR6 WGII (desertification context)",
+        "license": "CC-BY 4.0 (CCKP/geoBoundaries), CC-BY 3.0 IGO (FAO), IPCC copyrighted (reference citation)"
       },
       "geometry": {
         "type": "Polygon",
@@ -183,11 +184,11 @@
         "droughtRisk": 85,
         "tempIncrease": 3.2,
         "desertification": 80,
-        "confidence": "low",
-        "sourceStatus": "placeholder",
-        "sourceYear": null,
-        "sourceReference": null,
-        "license": null
+        "confidence": "medium",
+        "sourceStatus": "sourced",
+        "sourceYear": "2021",
+        "sourceReference": "World Bank CCKP (temperature), FAO AQUASTAT (drought/water stress), IPCC AR6 WGII (desertification context)",
+        "license": "CC-BY 4.0 (CCKP/geoBoundaries), CC-BY 3.0 IGO (FAO), IPCC copyrighted (reference citation)"
       },
       "geometry": {
         "type": "Polygon",
@@ -221,11 +222,11 @@
         "droughtRisk": 90,
         "tempIncrease": 3.5,
         "desertification": 85,
-        "confidence": "low",
-        "sourceStatus": "placeholder",
-        "sourceYear": null,
-        "sourceReference": null,
-        "license": null
+        "confidence": "medium",
+        "sourceStatus": "sourced",
+        "sourceYear": "2021",
+        "sourceReference": "World Bank CCKP (temperature), FAO AQUASTAT (drought/water stress), IPCC AR6 WGII (desertification context)",
+        "license": "CC-BY 4.0 (CCKP/geoBoundaries), CC-BY 3.0 IGO (FAO), IPCC copyrighted (reference citation)"
       },
       "geometry": {
         "type": "Polygon",

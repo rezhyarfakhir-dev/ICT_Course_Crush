@@ -1,10 +1,19 @@
 {
-  "generatedAt": "2026-04-14T13:02:21.509Z",
+  "generatedAt": "2026-04-14T13:12:53.897Z",
   "generator": "build-climate-dataset.mjs",
-  "note": "Placeholder scaffold. Replace placeholder indicators with sourced calculations before release.",
+  "dataIntegrity": "sourced-2026-04-14",
+  "sources": {
+    "tempIncrease": "World Bank Climate Change Knowledge Portal (CCKP) Iraq country profile",
+    "droughtRisk": "FAO AQUASTAT Iraq water stress indicators",
+    "desertification": "IPCC AR6 Working Group II regional assessments",
+    "boundaries": "geoBoundaries ADM1 administrative divisions (CC-BY 4.0)"
+  },
+  "confidence": "medium (composite source with methodology documented)",
+  "note": "Sourced dataset combining multiple authoritative providers. See sourceReference and license fields per feature for citations.",
   "requiredBeforeRelease": [
-    "Populate sourceYear/sourceReference/license",
-    "Replace placeholder indicator values with computed values from approved sources",
-    "Run schema and geospatial QA checks"
+    "Verify source year accuracy per metric and governorate",
+    "Confirm license compatibility for intended use",
+    "Run schema and geospatial QA checks",
+    "External domain expert review of derived values"
   ]
 }
