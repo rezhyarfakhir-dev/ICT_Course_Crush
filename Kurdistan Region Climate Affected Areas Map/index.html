@@ -418,28 +418,31 @@
     @media (max-width: 860px) {
       .header,
       .dock {
-        width: min(62vw, 360px);
+        width: min(48vw, 320px);
+        max-width: min(48vw, 320px);
       }
 
       .header {
-        top: 18px;
-        left: 18px;
+        top: 12px;
+        left: 12px;
       }
 
       .dock {
-        left: 18px;
-        bottom: 18px;
+        left: 12px;
+        bottom: 12px;
       }
 
       .info {
-        top: 120px;
-        right: 18px;
+        position: fixed;
+        top: 12px;
+        right: 12px;
         left: auto;
         bottom: auto;
-        width: clamp(220px, 34vw, 300px);
-        min-width: 220px;
-        max-height: min(66vh, 520px);
+        width: min(38vw, 220px);
+        min-width: 120px;
+        max-height: calc(100vh - 24px);
         overflow: auto;
+        z-index: 1030;
       }
 
       .range-row,
