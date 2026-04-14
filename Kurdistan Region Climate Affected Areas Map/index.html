@@ -262,7 +262,11 @@
       top: 18px;
       right: 18px;
       padding: 18px;
-      width: min(340px, calc(100vw - 36px));
+      width: clamp(240px, 33vw, 340px);
+      min-width: 240px;
+      max-height: min(72vh, 620px);
+      overflow: auto;
+      z-index: 1020;
       background: var(--panel-strong);
     }
 
@@ -414,16 +418,27 @@
     @media (max-width: 860px) {
       .header,
       .dock {
-        width: calc(100vw - 36px);
+        width: min(62vw, 360px);
+      }
+
+      .header {
+        top: 18px;
+        left: 18px;
+      }
+
+      .dock {
+        left: 18px;
+        bottom: 18px;
       }
 
       .info {
-        top: 18px;
+        top: 120px;
         right: 18px;
         left: auto;
         bottom: auto;
-        width: min(320px, calc(100vw - 36px));
-        max-height: min(60vh, 500px);
+        width: clamp(220px, 34vw, 300px);
+        min-width: 220px;
+        max-height: min(66vh, 520px);
         overflow: auto;
       }
 
