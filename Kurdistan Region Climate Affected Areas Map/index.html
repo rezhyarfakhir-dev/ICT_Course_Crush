@@ -51,6 +51,48 @@
       overflow: hidden;
     }
 
+    .panel-collapsible {
+      padding: 0;
+    }
+
+    .panel-toggle {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 14px 18px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--ink);
+      background: rgba(255,255,255,0.42);
+    }
+
+    .panel-toggle::-webkit-details-marker {
+      display: none;
+    }
+
+    .panel-toggle::after {
+      content: '▾';
+      font-size: 0.9rem;
+      transition: transform .18s ease;
+    }
+
+    .panel-collapsible[open] .panel-toggle::after {
+      transform: rotate(180deg);
+    }
+
+    .panel-collapsible[open] .panel-toggle {
+      border-bottom: 1px solid rgba(23, 33, 43, 0.08);
+      background: rgba(255,255,255,0.56);
+    }
+
+    .panel-content {
+      padding: 18px;
+    }
+
     .header {
       top: 18px;
       left: 18px;
@@ -93,7 +135,6 @@
     .filters {
       top: 172px;
       left: 18px;
-      padding: 18px;
       width: min(360px, calc(100vw - 36px));
       max-height: calc(100vh - 276px);
       overflow: auto;
@@ -313,7 +354,6 @@
     .legend {
       bottom: 18px;
       left: 18px;
-      padding: 16px 18px;
       font-size: 0.84rem;
       background: var(--panel-strong);
     }
@@ -371,11 +411,14 @@
         top: auto;
         bottom: 18px;
         max-height: 42vh;
+        overflow: visible;
       }
 
       .legend {
+        bottom: 92px;
         left: auto;
         right: 18px;
+        width: min(250px, calc(100vw - 36px));
       }
 
       .range-row,
@@ -394,7 +437,9 @@
   <p>Explore climate pressure across governorates, switch the active metric, and isolate the most vulnerable areas with threshold filters.</p>
 </div>
 
-<div class="panel filters">
+<details class="panel panel-collapsible filters" id="filtersPanel" open>
+  <summary class="panel-toggle">Filters and Layers</summary>
+  <div class="panel-content">
   <h2>Filters and Layers</h2>
   <p class="filters-intro">Use the metric switch to recolor the map, then narrow the visible regions with risk and temperature thresholds.</p>
 
@@ -468,6 +513,7 @@
 
   <span class="pill" id="statusPill">Showing 6 regions</span>
 </div>
+</details>
 
 <div class="panel info" id="infoPanel">
   <h2>Region Details</h2>
@@ -479,10 +525,13 @@
   <p class="default-msg">Click on a governorate to open a detailed climate profile.</p>
 </div>
 
-<div class="panel legend" id="legend">
-  <strong id="legendTitle">Drought Risk Level</strong>
-  <div id="legendItems"></div>
-</div>
+<details class="panel panel-collapsible legend" id="legendPanel" open>
+  <summary class="panel-toggle">Legend</summary>
+  <div class="panel-content">
+    <strong id="legendTitle">Drought Risk Level</strong>
+    <div id="legendItems"></div>
+  </div>
+</details>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
@@ -505,6 +554,8 @@
   const resetBtn      = document.getElementById('resetBtn');
   const statusPill    = document.getElementById('statusPill');
   const infoPanel     = document.getElementById('infoPanel');
+  const filtersPanel  = document.getElementById('filtersPanel');
+  const legendPanel   = document.getElementById('legendPanel');
   const legendTitle   = document.getElementById('legendTitle');
   const legendItems   = document.getElementById('legendItems');
 
@@ -682,6 +733,31 @@
     document.getElementById('desertVal').textContent = `${desertMin.value} – ${desertMax.value}%`;
     document.getElementById('tempVal').textContent = `${Number(tempMin.value).toFixed(1)} – ${Number(tempMax.value).toFixed(1)} °C`;
   };
+
+  const mobilePanels = window.matchMedia('(max-width: 860px)');
+
+  const syncPanelLayout = () => {
+    if (mobilePanels.matches) {
+      filtersPanel.open = false;
+      legendPanel.open = false;
+    } else {
+      filtersPanel.open = true;
+      legendPanel.open = true;
+    }
+  };
+
+  const bindExclusivePanels = (current, other) => {
+    current.addEventListener('toggle', () => {
+      if (mobilePanels.matches && current.open) {
+        other.open = false;
+      }
+    });
+  };
+
+  syncPanelLayout();
+  mobilePanels.addEventListener('change', syncPanelLayout);
+  bindExclusivePanels(filtersPanel, legendPanel);
+  bindExclusivePanels(legendPanel, filtersPanel);
 
   fetch('./governorates.json')
     .then((r) => r.json())
