@@ -1,0 +1,7 @@
+governorate,cvi_current,cvi_rcp85,cvi_change_pct,dust_storm_locations_pct,increased_temperature_locations_pct,irrigation_water_reduction_locations_pct,livelihood_abandonment_locations_pct
+Duhok,0.1256,0.1702,35.5,100,,0,0
+Erbil,0.1470,0.1570,6.8,98,99,67,33
+Sulaymaniyah,0.1432,0.1631,13.9,0,96,50,7
+Halabja,0.1682,0.2698,60.4,,,,
+Kirkuk,0.2483,0.2687,8.2,,,,
+Diyala,0.6048,0.6316,4.4,,,,

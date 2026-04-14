@@ -1,0 +1,14 @@
+ICT RFP RESPONSE
+
+This repository now includes a data-first visual story of:
+1) The problem (current and projected climate vulnerability)
+2) The implications (governorate-level interpretation)
+3) The road to change (3-year KPI pathway)
+
+Files added:
+- index.html
+- data/story-data.js
+- data/governorate_baseline.csv
+- data/kpi_targets.csv
+
+Open index.html in a browser to view the story.

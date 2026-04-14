@@ -1,0 +1,6 @@
+kpi,baseline,year1_target,year2_target,year3_target,unit
+subdistricts_with_integrated_risk_profiles_pct,0,40,70,90,percent
+locations_reporting_unmapped_high_risk_hotspots_pct,100,80,60,40,index_100_baseline
+district_plans_using_geospatial_risk_layers_pct,0,35,65,85,percent
+avg_time_to_prioritize_response_hotspots_days,100,80,65,50,index_100_baseline
+irrigation_stress_alerts_with_verified_field_followup_pct,0,50,75,90,percent
