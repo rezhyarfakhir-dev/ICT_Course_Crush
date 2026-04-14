@@ -1,6 +1,6 @@
 {
   "type": "FeatureCollection",
-  "generatedAt": "2026-04-14T13:12:53.897Z",
+  "generatedAt": "2026-04-14T13:16:01.464Z",
   "generationMethod": "scripts/build-climate-dataset.mjs",
   "dataIntegrity": "sourced-2026-04-14",
   "features": [
@@ -9,6 +9,7 @@
       "properties": {
         "name": "Duhok",
         "adminCode": null,
+        "description": "Increasing water scarcity in mountainous areas and impacts on local agriculture.",
         "droughtRisk": 45,
         "tempIncrease": 2.1,
         "desertification": 30,
@@ -55,6 +56,7 @@
       "properties": {
         "name": "Erbil",
         "adminCode": null,
+        "description": "Rapid urbanization coupled with decreasing groundwater levels and rising heatwaves.",
         "droughtRisk": 60,
         "tempIncrease": 2.5,
         "desertification": 55,
@@ -97,6 +99,7 @@
       "properties": {
         "name": "Sulaymaniyah",
         "adminCode": null,
+        "description": "Changes in precipitation patterns affecting the Dukan and Darbandikhan dams.",
         "droughtRisk": 50,
         "tempIncrease": 2.2,
         "desertification": 40,
@@ -139,6 +142,7 @@
       "properties": {
         "name": "Halabja",
         "adminCode": null,
+        "description": "Significant impacts on the agricultural sector and natural water springs.",
         "droughtRisk": 55,
         "tempIncrease": 2.3,
         "desertification": 45,
@@ -181,6 +185,7 @@
       "properties": {
         "name": "Kirkuk",
         "adminCode": null,
+        "description": "Severe desertification risks and high temperature spikes in the summer months.",
         "droughtRisk": 85,
         "tempIncrease": 3.2,
         "desertification": 80,
@@ -219,6 +224,7 @@
       "properties": {
         "name": "Diyala",
         "adminCode": null,
+        "description": "Critical water shortages in the Hamrin Basin leading to massive crop failures.",
         "droughtRisk": 90,
         "tempIncrease": 3.5,
         "desertification": 85,

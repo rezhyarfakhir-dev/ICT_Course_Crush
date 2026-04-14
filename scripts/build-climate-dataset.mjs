@@ -73,6 +73,7 @@ function transform(boundaries) {
         properties: {
           name: p.name || p.NAME_1 || 'Unknown',
           adminCode: p.admin_code || p.HASC_1 || null,
+          description: p.description || null,
           ...indicators,
           sourceYear: indicators.sourceYear,
           sourceReference: indicators.sourceReference,
