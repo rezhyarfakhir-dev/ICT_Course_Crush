@@ -472,6 +472,11 @@
     const controlsPanel = document.getElementById('controlsPanel');
     const legendPanel = document.getElementById('legendPanel');
 
+    // Always start as true dropdowns (collapsed) even if browser restores prior state.
+    statsPanel.open = false;
+    controlsPanel.open = false;
+    legendPanel.open = false;
+
     const accordionPanels = [statsPanel, controlsPanel, legendPanel];
     accordionPanels.forEach((panel) => {
       panel.addEventListener('toggle', () => {

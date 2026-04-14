@@ -744,6 +744,9 @@
     });
   };
 
+  // Always start collapsed to keep dropdown behavior consistent.
+  filtersPanel.open = false;
+  legendPanel.open = false;
   syncPanelLayout();
   if (typeof compactPanels.addEventListener === 'function') {
     compactPanels.addEventListener('change', syncPanelLayout);
