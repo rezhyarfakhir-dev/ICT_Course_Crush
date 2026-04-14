@@ -413,17 +413,17 @@
 
     @media (max-width: 860px) {
       .header,
-      .info,
       .dock {
         width: calc(100vw - 36px);
       }
 
       .info {
-        top: auto;
-        left: 18px;
-        right: auto;
-        bottom: 228px;
-        max-height: 34vh;
+        top: 18px;
+        right: 18px;
+        left: auto;
+        bottom: auto;
+        width: min(320px, calc(100vw - 36px));
+        max-height: min(60vh, 500px);
         overflow: auto;
       }
 
