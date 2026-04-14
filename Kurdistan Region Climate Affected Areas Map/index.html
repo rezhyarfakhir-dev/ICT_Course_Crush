@@ -51,6 +51,16 @@
       overflow: hidden;
     }
 
+    .dock {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 1010;
+      width: min(360px, calc(100vw - 36px));
+      display: grid;
+      gap: 10px;
+    }
+
     .panel-collapsible {
       padding: 0;
     }
@@ -133,11 +143,9 @@
     }
 
     .filters {
-      top: 172px;
-      left: 18px;
-      width: min(360px, calc(100vw - 36px));
-      max-height: calc(100vh - 276px);
-      overflow: auto;
+      width: 100%;
+      max-height: none;
+      overflow: hidden;
     }
 
     .filters h2 {
@@ -352,11 +360,9 @@
     }
 
     .legend {
-      bottom: 18px;
-      left: 18px;
+      width: 100%;
       font-size: 0.84rem;
       background: var(--panel-strong);
-      z-index: 950;
     }
 
     .legend strong {
@@ -394,8 +400,8 @@
 
     @media (max-width: 860px) {
       .header,
-      .filters,
-      .info {
+      .info,
+      .dock {
         width: calc(100vw - 36px);
       }
 
@@ -406,22 +412,6 @@
         bottom: 228px;
         max-height: 34vh;
         overflow: auto;
-      }
-
-      .filters {
-        top: auto;
-        bottom: 18px;
-        max-height: 42vh;
-        overflow: visible;
-        z-index: 1010;
-      }
-
-      .legend {
-        bottom: 92px;
-        left: auto;
-        right: 18px;
-        width: min(250px, calc(100vw - 36px));
-        z-index: 1005;
       }
 
       .range-row,
@@ -440,6 +430,7 @@
   <p>Explore climate pressure across governorates, switch the active metric, and isolate the most vulnerable areas with threshold filters.</p>
 </div>
 
+<div class="dock">
 <details class="panel panel-collapsible filters" id="filtersPanel">
   <summary class="panel-toggle">Filters and Layers</summary>
   <div class="panel-content">
@@ -535,11 +526,12 @@
     <div id="legendItems"></div>
   </div>
 </details>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
   const map = L.map('map', { minZoom: 5 }).setView([35.5, 44.5], 7);
-  L.control.scale({ imperial: false }).addTo(map);
+  L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(map);
@@ -740,13 +732,8 @@
   const compactPanels = window.matchMedia('(max-width: 1200px)');
 
   const syncPanelLayout = () => {
-    if (compactPanels.matches) {
-      filtersPanel.open = false;
-      legendPanel.open = false;
-    } else {
-      filtersPanel.open = true;
-      legendPanel.open = true;
-    }
+    filtersPanel.open = false;
+    legendPanel.open = false;
   };
 
   const bindExclusivePanels = (current, other) => {

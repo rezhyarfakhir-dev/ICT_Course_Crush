@@ -49,6 +49,57 @@
       overflow: hidden;
     }
 
+    .panel-collapsible {
+      padding: 0;
+      overflow: hidden;
+      background: var(--panel-strong);
+    }
+
+    .panel-toggle {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      padding: 12px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .panel-toggle::-webkit-details-marker {
+      display: none;
+    }
+
+    .panel-toggle::after {
+      content: '▾';
+      font-size: 0.85rem;
+      transition: transform .18s ease;
+    }
+
+    .panel-collapsible[open] .panel-toggle::after {
+      transform: rotate(180deg);
+    }
+
+    .panel-content {
+      padding: 14px;
+      border-top: 1px solid rgba(20, 32, 42, 0.08);
+      max-height: min(52vh, 460px);
+      overflow: auto;
+    }
+
+    .dock {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 1010;
+      width: min(410px, calc(100vw - 36px));
+      display: grid;
+      gap: 10px;
+    }
+
     .header {
       top: 18px;
       left: 18px;
@@ -88,11 +139,8 @@
     }
 
     .stats {
-      top: 18px;
-      right: 18px;
-      padding: 18px 20px;
-      min-width: 280px;
-      background: var(--panel-strong);
+      min-width: 0;
+      background: transparent;
     }
 
     .stats h2 {
@@ -135,12 +183,7 @@
     }
 
     .controls {
-      top: 162px;
-      left: 18px;
-      padding: 18px;
-      width: min(410px, calc(100vw - 36px));
-      max-height: calc(100vh - 240px);
-      overflow: auto;
+      width: 100%;
     }
 
     .controls h2 {
@@ -255,11 +298,9 @@
     }
 
     .legend {
-      bottom: 18px;
-      left: 18px;
-      padding: 16px 18px;
+      width: 100%;
       font-size: 0.86rem;
-      background: var(--panel-strong);
+      background: transparent;
     }
 
     .legend strong {
@@ -301,28 +342,9 @@
 
     @media (max-width: 860px) {
       .header,
-      .stats,
-      .controls {
+      .dock {
         width: calc(100vw - 36px);
         max-width: calc(100vw - 36px);
-      }
-
-      .stats {
-        top: auto;
-        right: auto;
-        left: 18px;
-        bottom: 238px;
-      }
-
-      .controls {
-        top: auto;
-        bottom: 18px;
-        max-height: 42vh;
-      }
-
-      .legend {
-        right: 18px;
-        left: auto;
       }
 
       .stats-grid,
@@ -342,11 +364,17 @@
     <p>Explore the Global Active Archive of Large Flood Events with filters for impact, severity, validation, date range, and location context.</p>
   </div>
 
-  <div class="panel stats" id="stats">
-    <h2>Loading archive snapshot...</h2>
-  </div>
+  <div class="dock">
+  <details class="panel panel-collapsible stats" id="statsPanel">
+    <summary class="panel-toggle">Snapshot</summary>
+    <div class="panel-content" id="stats">
+      <h2>Loading archive snapshot...</h2>
+    </div>
+  </details>
 
-  <div class="panel controls">
+  <details class="panel panel-collapsible controls" id="controlsPanel">
+    <summary class="panel-toggle">Filters and Tools</summary>
+    <div class="panel-content">
     <h2>Filters and Tools</h2>
     <p class="controls-intro">Narrow the archive, compare event patterns, and zoom the map to the filtered results.</p>
     <div class="control-grid">
@@ -415,19 +443,24 @@
 
     <div id="activeStatus" class="status-pill">Showing all events</div>
     <div class="small-note">Tip: dense regions are easier to inspect if you filter by year or cause first, then use Fit Results.</div>
-  </div>
+    </div>
+  </details>
 
-  <div class="panel legend">
-    <strong>Severity</strong>
-    <div class="legend-item"><span class="swatch" style="background:#74b6d7"></span>Low</div>
-    <div class="legend-item"><span class="swatch" style="background:#f5c56a"></span>Medium</div>
-    <div class="legend-item"><span class="swatch" style="background:#dc6d47"></span>High</div>
+  <details class="panel panel-collapsible legend" id="legendPanel">
+    <summary class="panel-toggle">Legend</summary>
+    <div class="panel-content">
+      <strong>Severity</strong>
+      <div class="legend-item"><span class="swatch" style="background:#74b6d7"></span>Low</div>
+      <div class="legend-item"><span class="swatch" style="background:#f5c56a"></span>Medium</div>
+      <div class="legend-item"><span class="swatch" style="background:#dc6d47"></span>High</div>
+    </div>
+  </details>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
     const map = L.map('map', { minZoom: 2 }).setView([22, 10], 2);
-    L.control.scale({ imperial: false }).addTo(map);
+    L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
@@ -435,6 +468,19 @@
 
     const statsEl = document.getElementById('stats');
     const activeStatusEl = document.getElementById('activeStatus');
+    const statsPanel = document.getElementById('statsPanel');
+    const controlsPanel = document.getElementById('controlsPanel');
+    const legendPanel = document.getElementById('legendPanel');
+
+    const accordionPanels = [statsPanel, controlsPanel, legendPanel];
+    accordionPanels.forEach((panel) => {
+      panel.addEventListener('toggle', () => {
+        if (!panel.open) return;
+        accordionPanels.forEach((other) => {
+          if (other !== panel) other.open = false;
+        });
+      });
+    });
 
     const controls = {
       searchInput: document.getElementById('searchInput'),
