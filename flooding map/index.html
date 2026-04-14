@@ -119,6 +119,47 @@
       max-width: 430px;
     }
 
+    .search-banner {
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(620px, calc(100vw - 140px));
+      padding: 14px;
+      z-index: 1040;
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .search-banner form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .search-banner input {
+      width: 100%;
+    }
+
+    .search-banner button {
+      min-width: 88px;
+      width: auto;
+    }
+
+    .search-status {
+      margin-top: 8px;
+      min-height: 1.2em;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    .search-status[data-tone="error"] {
+      color: #9d3c2d;
+    }
+
+    .search-status[data-tone="success"] {
+      color: #23644a;
+    }
+
     .eyebrow {
       display: inline-flex;
       padding: 6px 10px;
@@ -353,6 +394,15 @@
     }
 
     @media (max-width: 860px) {
+      .search-banner {
+        top: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .search-banner form {
+        grid-template-columns: 1fr;
+      }
+
       .header,
       .dock {
         width: calc(100vw - 36px);
@@ -369,6 +419,15 @@
 </head>
 <body>
   <div id="map"></div>
+
+  <div class="panel search-banner">
+    <form id="apiSearchForm">
+      <input id="apiSearchInput" type="search" placeholder="Search a city, river basin, or country" aria-label="Search location" />
+      <button id="apiSearchBtn" type="submit">Search</button>
+      <button id="apiSearchClear" type="button">Clear</button>
+    </form>
+    <div class="search-status" id="apiSearchStatus">Top search uses live geocoding. The filter search below still narrows flood events locally.</div>
+  </div>
 
   <div class="panel header">
     <div class="eyebrow">DFO archive atlas</div>
@@ -483,6 +542,10 @@
     const statsPanel = document.getElementById('statsPanel');
     const controlsPanel = document.getElementById('controlsPanel');
     const legendPanel = document.getElementById('legendPanel');
+    const apiSearchForm = document.getElementById('apiSearchForm');
+    const apiSearchInput = document.getElementById('apiSearchInput');
+    const apiSearchClear = document.getElementById('apiSearchClear');
+    const apiSearchStatus = document.getElementById('apiSearchStatus');
 
     // Always start as true dropdowns (collapsed) even if browser restores prior state.
     statsPanel.open = false;
@@ -517,6 +580,50 @@
     let allFeatures = [];
     let filteredFeatures = [];
     const markerGroup = L.layerGroup().addTo(map);
+    let apiSearchMarker = null;
+
+    const setSearchStatus = (message, tone = '') => {
+      apiSearchStatus.textContent = message;
+      if (tone) apiSearchStatus.dataset.tone = tone;
+      else delete apiSearchStatus.dataset.tone;
+    };
+
+    const clearSearchMarker = () => {
+      if (apiSearchMarker) {
+        map.removeLayer(apiSearchMarker);
+        apiSearchMarker = null;
+      }
+    };
+
+    const geocodeLocation = async (query) => {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`, {
+        headers: {
+          Accept: 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Search service is unavailable right now.');
+      }
+
+      const results = await response.json();
+      if (!Array.isArray(results) || !results.length) {
+        throw new Error('No matching place found.');
+      }
+
+      const match = results[0];
+      const lat = Number(match.lat);
+      const lon = Number(match.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        throw new Error('Search result returned invalid coordinates.');
+      }
+
+      clearSearchMarker();
+      apiSearchMarker = L.marker([lat, lon]).addTo(map);
+      apiSearchMarker.bindPopup(`<strong>${match.display_name}</strong>`).openPopup();
+      map.flyTo([lat, lon], Math.max(map.getZoom(), 7), { duration: 1.2 });
+      setSearchStatus(`Geocoded result: ${match.display_name}.`, 'success');
+    };
 
     const styleFor = (severity) => {
       if (!severity || severity <= 1) return { color: '#4d8eae', fillColor: '#74b6d7', radius: 3 };
@@ -670,6 +777,28 @@
       controls.impactOnly.checked = false;
       applyFilters();
     };
+
+    apiSearchForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const query = apiSearchInput.value.trim();
+      if (!query) {
+        setSearchStatus('Enter a place name to search.', 'error');
+        return;
+      }
+
+      setSearchStatus('Searching map service...');
+      try {
+        await geocodeLocation(query);
+      } catch (error) {
+        setSearchStatus(error.message || 'Search failed.', 'error');
+      }
+    });
+
+    apiSearchClear.addEventListener('click', () => {
+      apiSearchInput.value = '';
+      clearSearchMarker();
+      setSearchStatus('Search cleared.');
+    });
 
     fetch('./floodEvents.geojson')
       .then((response) => response.json())

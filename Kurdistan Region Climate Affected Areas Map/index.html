@@ -123,6 +123,55 @@
       width: min(440px, calc(100vw - 36px));
     }
 
+    .search-banner {
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(560px, calc(100vw - 140px));
+      padding: 14px;
+      z-index: 1040;
+      background: rgba(255, 252, 247, 0.96);
+    }
+
+    .search-banner form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .search-banner input {
+      width: 100%;
+      border: 1px solid rgba(23, 33, 43, 0.12);
+      border-radius: 14px;
+      padding: 11px 12px;
+      font-size: 0.88rem;
+      background: rgba(255,255,255,0.96);
+      color: var(--ink);
+      font-family: inherit;
+    }
+
+    .search-banner button {
+      width: auto;
+      min-width: 88px;
+      padding: 11px 14px;
+    }
+
+    .search-status {
+      margin-top: 8px;
+      min-height: 1.2em;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    .search-status[data-tone="error"] {
+      color: #9d3c2d;
+    }
+
+    .search-status[data-tone="success"] {
+      color: #2d6951;
+    }
+
     .eyebrow {
       display: inline-flex;
       padding: 6px 10px;
@@ -467,6 +516,15 @@
     }
 
     @media (max-width: 860px) {
+      .search-banner {
+        top: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .search-banner form {
+        grid-template-columns: 1fr;
+      }
+
       .header,
       .dock {
         width: min(48vw, 320px);
@@ -505,6 +563,15 @@
 </head>
 <body>
 <div id="map"></div>
+
+<div class="panel search-banner">
+  <form id="apiSearchForm">
+    <input id="apiSearchInput" type="search" placeholder="Search a city, district, or landmark" aria-label="Search location" />
+    <button id="apiSearchBtn" type="submit">Search</button>
+    <button id="apiSearchClear" type="button">Clear</button>
+  </form>
+  <div class="search-status" id="apiSearchStatus">Search the map with live geocoding or jump to a visible region name.</div>
+</div>
 
 <div class="panel header">
   <div class="eyebrow">Kurdistan climate view</div>
@@ -635,6 +702,10 @@
   const legendPanel   = document.getElementById('legendPanel');
   const legendTitle   = document.getElementById('legendTitle');
   const legendItems   = document.getElementById('legendItems');
+  const apiSearchForm = document.getElementById('apiSearchForm');
+  const apiSearchInput = document.getElementById('apiSearchInput');
+  const apiSearchClear = document.getElementById('apiSearchClear');
+  const apiSearchStatus = document.getElementById('apiSearchStatus');
 
   const SCALES = {
     droughtRisk: {
@@ -710,6 +781,72 @@
 
   let allFeatures = [];
   let geojsonLayer = null;
+  let apiSearchMarker = null;
+
+  const setSearchStatus = (message, tone = '') => {
+    apiSearchStatus.textContent = message;
+    if (tone) apiSearchStatus.dataset.tone = tone;
+    else delete apiSearchStatus.dataset.tone;
+  };
+
+  const clearSearchMarker = () => {
+    if (apiSearchMarker) {
+      map.removeLayer(apiSearchMarker);
+      apiSearchMarker = null;
+    }
+  };
+
+  const searchLocalRegion = (query) => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized || !geojsonLayer) return false;
+
+    let matched = false;
+    geojsonLayer.eachLayer((layer) => {
+      const regionName = String(layer.feature?.properties?.name || '').toLowerCase();
+      if (matched || !regionName) return;
+      if (regionName.includes(normalized) || normalized.includes(regionName)) {
+        matched = true;
+        regionSelect.value = layer.feature.properties.name;
+        updateLayer();
+        map.fitBounds(layer.getBounds().pad(0.18));
+        showInfo(layer.feature.properties || {});
+        clearSearchMarker();
+        setSearchStatus(`Jumped to mapped region: ${layer.feature.properties.name}.`, 'success');
+      }
+    });
+
+    return matched;
+  };
+
+  const searchWithGeocoder = async (query) => {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`, {
+      headers: {
+        Accept: 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Search service is unavailable right now.');
+    }
+
+    const results = await response.json();
+    if (!Array.isArray(results) || !results.length) {
+      throw new Error('No matching place found.');
+    }
+
+    const match = results[0];
+    const lat = Number(match.lat);
+    const lon = Number(match.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      throw new Error('Search result returned invalid coordinates.');
+    }
+
+    clearSearchMarker();
+    apiSearchMarker = L.marker([lat, lon]).addTo(map);
+    apiSearchMarker.bindPopup(`<strong>${escapeHtml(match.display_name)}</strong>`).openPopup();
+    map.flyTo([lat, lon], Math.max(map.getZoom(), 10), { duration: 1.2 });
+    setSearchStatus(`Geocoded result: ${match.display_name}.`, 'success');
+  };
 
   const featureVisible = (feature) => {
     const p = feature.properties || {};
@@ -945,6 +1082,30 @@
     .catch(() => {
       statusPill.textContent = 'Failed to load data';
     });
+
+  apiSearchForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const query = apiSearchInput.value.trim();
+    if (!query) {
+      setSearchStatus('Enter a place name to search.', 'error');
+      return;
+    }
+
+    if (searchLocalRegion(query)) return;
+
+    setSearchStatus('Searching map service...');
+    try {
+      await searchWithGeocoder(query);
+    } catch (error) {
+      setSearchStatus(error.message || 'Search failed.', 'error');
+    }
+  });
+
+  apiSearchClear.addEventListener('click', () => {
+    apiSearchInput.value = '';
+    clearSearchMarker();
+    setSearchStatus('Search cleared.');
+  });
 
   [metricSelect, regionSelect, highRiskOnly].forEach((el) =>
     el.addEventListener('change', updateLayer));
