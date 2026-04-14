@@ -356,6 +356,7 @@
       left: 18px;
       font-size: 0.84rem;
       background: var(--panel-strong);
+      z-index: 950;
     }
 
     .legend strong {
@@ -412,6 +413,7 @@
         bottom: 18px;
         max-height: 42vh;
         overflow: visible;
+        z-index: 1010;
       }
 
       .legend {
@@ -419,6 +421,7 @@
         left: auto;
         right: 18px;
         width: min(250px, calc(100vw - 36px));
+        z-index: 1005;
       }
 
       .range-row,
@@ -437,7 +440,7 @@
   <p>Explore climate pressure across governorates, switch the active metric, and isolate the most vulnerable areas with threshold filters.</p>
 </div>
 
-<details class="panel panel-collapsible filters" id="filtersPanel" open>
+<details class="panel panel-collapsible filters" id="filtersPanel">
   <summary class="panel-toggle">Filters and Layers</summary>
   <div class="panel-content">
   <h2>Filters and Layers</h2>
@@ -525,7 +528,7 @@
   <p class="default-msg">Click on a governorate to open a detailed climate profile.</p>
 </div>
 
-<details class="panel panel-collapsible legend" id="legendPanel" open>
+<details class="panel panel-collapsible legend" id="legendPanel">
   <summary class="panel-toggle">Legend</summary>
   <div class="panel-content">
     <strong id="legendTitle">Drought Risk Level</strong>
@@ -734,10 +737,10 @@
     document.getElementById('tempVal').textContent = `${Number(tempMin.value).toFixed(1)} – ${Number(tempMax.value).toFixed(1)} °C`;
   };
 
-  const mobilePanels = window.matchMedia('(max-width: 860px)');
+  const compactPanels = window.matchMedia('(max-width: 1200px)');
 
   const syncPanelLayout = () => {
-    if (mobilePanels.matches) {
+    if (compactPanels.matches) {
       filtersPanel.open = false;
       legendPanel.open = false;
     } else {
@@ -748,14 +751,18 @@
 
   const bindExclusivePanels = (current, other) => {
     current.addEventListener('toggle', () => {
-      if (mobilePanels.matches && current.open) {
+      if (current.open) {
         other.open = false;
       }
     });
   };
 
   syncPanelLayout();
-  mobilePanels.addEventListener('change', syncPanelLayout);
+  if (typeof compactPanels.addEventListener === 'function') {
+    compactPanels.addEventListener('change', syncPanelLayout);
+  } else if (typeof compactPanels.addListener === 'function') {
+    compactPanels.addListener(syncPanelLayout);
+  }
   bindExclusivePanels(filtersPanel, legendPanel);
   bindExclusivePanels(legendPanel, filtersPanel);
 
