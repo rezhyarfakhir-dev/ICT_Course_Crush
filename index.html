@@ -3,76 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ICT RFP Response - Climate Story</title>
+  <title>Kurdistan Climate Decision Story</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f7f4eb;
-      --ink: #101722;
-      --muted: #485462;
-      --brand: #0e8f78;
-      --accent: #ff715b;
-      --panel: #fffdf7;
-      --line: #d8d2bf;
-      --shadow: 0 16px 40px rgba(16, 23, 34, 0.08);
+      --bg: #f3efe4;
+      --panel: #fffdf6;
+      --ink: #1b2733;
+      --muted: #546476;
+      --line: #d8cfb8;
+      --risk: #d95f3b;
+      --now: #1f9d88;
+      --future: #d95f3b;
+      --act: #34495e;
+      --shadow: 0 14px 32px rgba(27, 39, 51, 0.08);
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: "Space Grotesk", sans-serif;
       color: var(--ink);
+      font-family: "Manrope", sans-serif;
       background:
-        radial-gradient(circle at 10% 0%, #fef3d7 0%, transparent 40%),
-        radial-gradient(circle at 100% 10%, #d9f5ee 0%, transparent 38%),
+        radial-gradient(circle at 10% 0%, #fcefd6 0%, transparent 38%),
+        radial-gradient(circle at 100% 10%, #d8efe9 0%, transparent 35%),
         var(--bg);
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
     .wrap {
-      max-width: 1120px;
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 28px 18px 60px;
+      padding: 24px 18px 64px;
     }
 
     .hero {
       border: 1px solid var(--line);
-      background: linear-gradient(140deg, #fff9ec, #f6fff8);
-      border-radius: 22px;
-      padding: 28px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, #fff8e8, #f8fff7);
       box-shadow: var(--shadow);
-      animation: rise 0.7s ease-out both;
+      padding: 24px;
+      animation: rise .7s ease-out both;
     }
 
     .eyebrow {
       font-family: "IBM Plex Mono", monospace;
-      color: var(--brand);
       font-size: 12px;
-      letter-spacing: 0.12em;
+      letter-spacing: .12em;
       text-transform: uppercase;
-      margin-bottom: 8px;
+      color: var(--act);
+      margin-bottom: 10px;
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: clamp(1.7rem, 5vw, 2.6rem);
-      line-height: 1.12;
+      margin: 0;
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.8rem, 4.8vw, 3rem);
+      line-height: 1.08;
+      max-width: 20ch;
     }
 
-    .sub {
-      margin: 0;
+    .intro {
+      margin-top: 12px;
       color: var(--muted);
-      max-width: 70ch;
+      max-width: 72ch;
+    }
+
+    .question {
+      margin-top: 12px;
+      background: #eff6ff;
+      border: 1px solid #cdddf2;
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: #1f3f62;
+      font-weight: 600;
     }
 
     .grid {
-      margin-top: 18px;
       display: grid;
       grid-template-columns: repeat(12, 1fr);
       gap: 14px;
+      margin-top: 16px;
     }
 
     .card {
@@ -81,99 +95,177 @@
       border-radius: 16px;
       padding: 16px;
       box-shadow: var(--shadow);
-      animation: rise 0.7s ease-out both;
+      animation: rise .7s ease-out both;
     }
 
-    .section-title {
-      margin: 2px 0 12px;
-      font-size: 1.12rem;
-    }
-
-    .section-desc {
-      margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 0.94rem;
-    }
-
-    .span-7 { grid-column: span 7; }
-    .span-5 { grid-column: span 5; }
     .span-12 { grid-column: span 12; }
+    .span-8 { grid-column: span 8; }
     .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+
+    .act-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--act);
+      margin-bottom: 6px;
+    }
+
+    .title {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .desc {
+      margin: 0;
+      color: var(--muted);
+      font-size: .94rem;
+    }
+
+    .chips {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: .76rem;
+      color: #385168;
+      background: #f7fbff;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .chip.measured { background: #ecfbf7; color: #115949; border-color: #b6e4d9; }
+    .chip.modeled { background: #fff2ec; color: #7f311a; border-color: #f5c2af; }
+    .chip.assumed { background: #fff9eb; color: #7b5600; border-color: #eed8a4; }
 
     .chart {
+      margin-top: 12px;
       display: grid;
       gap: 10px;
     }
 
     .row {
       display: grid;
-      grid-template-columns: 110px 1fr 1fr;
-      align-items: center;
+      grid-template-columns: 112px 1fr 1fr auto;
       gap: 8px;
+      align-items: center;
     }
 
-    .name {
-      font-size: 0.86rem;
-      font-weight: 600;
-    }
+    .name { font-size: .86rem; font-weight: 700; }
 
     .bar {
-      position: relative;
       height: 16px;
-      background: #ece7d6;
+      background: #ece4d1;
       border-radius: 999px;
       overflow: hidden;
+      position: relative;
     }
 
     .fill {
-      position: absolute;
-      inset: 0;
+      height: 100%;
       width: 0;
+      animation: grow .9s ease-out forwards;
       border-radius: 999px;
-      animation: grow 0.9s ease-out forwards;
     }
 
-    .fill.now { background: var(--brand); }
-    .fill.future { background: var(--accent); }
+    .fill.now { background: var(--now); }
+    .fill.future { background: var(--future); }
+
+    .delta {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: .74rem;
+      color: #6b4a25;
+      background: #fff6e8;
+      border: 1px solid #efd7aa;
+      border-radius: 999px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
 
     .legend {
       display: flex;
-      gap: 14px;
-      margin-bottom: 10px;
-      font-size: 0.78rem;
+      gap: 12px;
+      margin-top: 8px;
       color: var(--muted);
+      font-size: .8rem;
       font-family: "IBM Plex Mono", monospace;
     }
 
     .dot {
-      width: 10px;
-      height: 10px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       display: inline-block;
-      margin-right: 6px;
+      margin-right: 5px;
     }
 
-    .implication {
-      border-left: 4px solid var(--brand);
-      padding-left: 10px;
-      margin: 10px 0;
+    .decision-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
-    .implication h3 {
+    .decision {
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--risk);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fffef9;
+    }
+
+    .decision h4 {
       margin: 0;
-      font-size: 0.95rem;
+      font-size: .92rem;
     }
 
-    .implication p {
-      margin: 4px 0 0;
+    .decision p {
+      margin: 5px 0 0;
       color: var(--muted);
-      font-size: 0.9rem;
+      font-size: .88rem;
     }
+
+    .evidence-list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: .84rem;
+    }
+
+    .evidence-list li { margin-bottom: 2px; }
+
+    .scenario {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .scenario h4 {
+      margin: 0 0 8px;
+      font-size: .95rem;
+    }
+
+    .scenario ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .scenario.risk h4 { color: #8e2f15; }
+    .scenario.gain h4 { color: #126655; }
 
     .kpi {
-      margin-bottom: 12px;
-      padding-bottom: 12px;
       border-bottom: 1px dashed var(--line);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
     }
 
     .kpi:last-child { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
@@ -183,61 +275,57 @@
       justify-content: space-between;
       gap: 8px;
       align-items: baseline;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
-    .kpi-name {
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .kpi-unit {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
+    .kpi-name { font-size: .9rem; font-weight: 700; }
+    .meta { color: var(--muted); font-size: .76rem; font-family: "IBM Plex Mono", monospace; }
 
     .track {
       height: 10px;
-      background: #ede9dc;
       border-radius: 999px;
+      background: #ece3cf;
       overflow: hidden;
+      margin-top: 6px;
     }
 
-    .milestone {
-      height: 10px;
-      border-radius: 999px;
-      animation: grow 0.9s ease-out forwards;
+    .m {
+      height: 100%;
       width: 0;
-      background: linear-gradient(90deg, #0e8f78, #25a28d);
+      animation: grow .8s ease-out forwards;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #157a69, #27a389);
     }
 
     .source-list {
-      margin: 0;
+      margin: 8px 0 0;
       padding-left: 18px;
       color: var(--muted);
-      font-size: 0.9rem;
+      font-size: .9rem;
     }
 
-    .tag {
-      display: inline-block;
+    .source-list a { color: #1e5a85; text-decoration: none; }
+    .source-list a:hover { text-decoration: underline; }
+
+    .note {
       margin-top: 10px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #e6fff6;
-      color: #055747;
-      font-size: 0.76rem;
-      font-family: "IBM Plex Mono", monospace;
+      font-size: .85rem;
+      color: #4b6178;
+      background: #eef7ff;
+      border: 1px solid #cfe3f6;
+      border-radius: 10px;
+      padding: 8px 10px;
     }
 
     @media (max-width: 980px) {
-      .span-7, .span-5, .span-4 { grid-column: span 12; }
-      .row { grid-template-columns: 95px 1fr 1fr; }
+      .span-8, .span-4, .span-6 { grid-column: span 12; }
+      .decision-grid { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 90px 1fr 1fr auto; }
     }
 
     @keyframes grow { from { width: 0; } }
     @keyframes rise {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
@@ -245,38 +333,73 @@
 <body>
   <main class="wrap">
     <section class="hero">
-      <div class="eyebrow">ICT RFP Response</div>
-      <h1 id="story-title">Visual Story</h1>
-      <p class="sub" id="story-subtitle"></p>
-      <span class="tag">Data-backed narrative</span>
+      <div class="eyebrow">ICT RFP RESPONSE | STORY MODE</div>
+      <h1 id="story-title">Climate story</h1>
+      <p class="intro" id="story-subtitle"></p>
+      <p class="intro" id="story-audience"></p>
+      <div class="question" id="decision-question"></div>
+      <div class="chips">
+        <span class="chip measured">Measured evidence</span>
+        <span class="chip modeled">Modeled projection</span>
+        <span class="chip assumed">Assumption target</span>
+      </div>
     </section>
 
     <section class="grid">
-      <article class="card span-7" style="animation-delay: 0.05s;">
-        <h2 class="section-title">1) The Problem Now vs. Future Risk</h2>
-        <p class="section-desc">Current CVI and projected CVI under RCP8.5 by governorate. Higher bars indicate higher climate vulnerability.</p>
+      <article class="card span-8" style="animation-delay:.05s">
+        <div class="act-label">Act 1 + Act 2</div>
+        <h2 class="title">What changed, where risk is climbing</h2>
+        <p class="desc">Current CVI and projected CVI (RCP8.5) for six governorates. The change badge shows relative rise from current baseline.</p>
         <div class="legend">
-          <span><span class="dot" style="background:#0e8f78"></span>Current</span>
-          <span><span class="dot" style="background:#ff715b"></span>Projected (RCP8.5)</span>
+          <span><span class="dot" style="background:#1f9d88"></span>Current CVI</span>
+          <span><span class="dot" style="background:#d95f3b"></span>Projected CVI</span>
         </div>
         <div id="problem-chart" class="chart"></div>
+        <div class="note" id="uncertainty-note"></div>
       </article>
 
-      <article class="card span-5" style="animation-delay: 0.1s;">
-        <h2 class="section-title">2) Implications</h2>
-        <p class="section-desc">What the numbers mean operationally for policy, resilience, and investment timing.</p>
-        <div id="implications"></div>
+      <article class="card span-4" style="animation-delay:.08s">
+        <div class="act-label">Act 1</div>
+        <h2 class="title">Why this matters now</h2>
+        <p class="desc">Delayed action shifts systems from prevention to crisis response, increasing cost and social stress.</p>
+        <div class="chips" id="stakes"></div>
       </article>
 
-      <article class="card span-12" style="animation-delay: 0.15s;">
-        <h2 class="section-title">3) The Road to Change (3-Year KPI Path)</h2>
-        <p class="section-desc">Targets show the transition from fragmented response to integrated anticipatory planning.</p>
+      <article class="card span-12" style="animation-delay:.11s">
+        <div class="act-label">Act 3</div>
+        <h2 class="title">Implications translated into decisions</h2>
+        <p class="desc">Each card turns evidence into an action statement for this year, with in-line source references.</p>
+        <div id="decisions" class="decision-grid"></div>
+      </article>
+
+      <article class="card span-6" style="animation-delay:.14s">
+        <div class="act-label">Act 4</div>
+        <h2 class="title">Scenario contrast: no action vs focused action</h2>
+        <p class="desc">The same data supports two trajectories. This section clarifies the policy trade-off.</p>
+        <div class="grid" style="grid-template-columns:1fr 1fr; margin-top:8px; gap:8px;">
+          <div class="scenario risk">
+            <h4>If action is delayed</h4>
+            <ul id="without-action"></ul>
+          </div>
+          <div class="scenario gain">
+            <h4>If roadmap is executed</h4>
+            <ul id="with-action"></ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="card span-6" style="animation-delay:.17s">
+        <div class="act-label">Act 5</div>
+        <h2 class="title">Road to change with accountability markers</h2>
+        <p class="desc">Targets are explicitly marked as assumption-based to avoid mixing projections with measured baselines.</p>
         <div id="kpi-roadmap"></div>
       </article>
 
-      <article class="card span-12" style="animation-delay: 0.2s;">
-        <h2 class="section-title">Data Sources</h2>
+      <article class="card span-12" style="animation-delay:.2s">
+        <div class="act-label">Evidence register</div>
+        <h2 class="title">Sources and citation keys</h2>
         <ul id="sources" class="source-list"></ul>
+        <div class="note" id="culture-note"></div>
       </article>
     </section>
   </main>
@@ -284,31 +407,79 @@
   <script src="data/story-data.js"></script>
   <script>
     const data = window.STORY_DATA;
+    const sourceMap = Object.fromEntries(data.sources.map((s) => [s.id, s]));
 
     document.getElementById("story-title").textContent = data.title;
     document.getElementById("story-subtitle").textContent = data.subtitle;
+    document.getElementById("story-audience").textContent = data.audience;
+    document.getElementById("decision-question").textContent = data.decisionQuestion;
+    document.getElementById("uncertainty-note").textContent = "Uncertainty note: " + data.uncertaintyNote;
+    document.getElementById("culture-note").textContent = "Cultural practice note: " + data.culturalPracticeNote;
+
+    const maxCurrent = Math.max(...data.governorates.map((g) => g.cviCurrent));
+    const maxProjected = Math.max(...data.governorates.map((g) => g.cviRcp85));
+    const highestRise = data.governorates.reduce((a, b) => (a.cviChangePct > b.cviChangePct ? a : b));
+
+    const stakes = document.getElementById("stakes");
+    stakes.innerHTML = `
+      <span class="chip measured">Max current CVI: ${maxCurrent.toFixed(3)}</span>
+      <span class="chip modeled">Max projected CVI: ${maxProjected.toFixed(3)}</span>
+      <span class="chip modeled">Fastest rise: ${highestRise.name} (+${highestRise.cviChangePct.toFixed(1)}%)</span>
+      <span class="chip assumed">Decision window: next 12 months</span>
+    `;
 
     const problem = document.getElementById("problem-chart");
-    data.governorates.forEach((g) => {
+    data.governorates.forEach((g, i) => {
       const row = document.createElement("div");
       row.className = "row";
       const currentWidth = Math.min(100, g.cviCurrent * 100);
       const futureWidth = Math.min(100, g.cviRcp85 * 100);
-
       row.innerHTML = `
         <div class="name">${g.name}</div>
-        <div class="bar"><div class="fill now" style="width:${currentWidth}%;animation-delay:0.1s"></div></div>
-        <div class="bar"><div class="fill future" style="width:${futureWidth}%;animation-delay:0.2s"></div></div>
+        <div class="bar"><div class="fill now" style="width:${currentWidth}%; animation-delay:${0.05 + i * 0.03}s"></div></div>
+        <div class="bar"><div class="fill future" style="width:${futureWidth}%; animation-delay:${0.12 + i * 0.03}s"></div></div>
+        <div class="delta">+${g.cviChangePct.toFixed(1)}%</div>
       `;
       problem.appendChild(row);
     });
 
-    const implications = document.getElementById("implications");
+    const decisions = document.getElementById("decisions");
     data.governorates.forEach((g) => {
-      const item = document.createElement("div");
-      item.className = "implication";
-      item.innerHTML = `<h3>${g.name}</h3><p>${g.implication}</p>`;
-      implications.appendChild(item);
+      const block = document.createElement("article");
+      block.className = "decision";
+
+      const evidenceItems = g.evidence
+        .map((e) => {
+          const src = sourceMap[e.source];
+          const klass = e.evidenceType.includes("assumption")
+            ? "assumed"
+            : e.evidenceType.includes("modeled")
+              ? "modeled"
+              : "measured";
+          return `<li>${e.metric}: <strong>${e.value}</strong> <span class="chip ${klass}" style="padding:1px 6px; font-size:.66rem;">${e.evidenceType}</span> [${src.id}]</li>`;
+        })
+        .join("");
+
+      block.innerHTML = `
+        <h4>${g.name}</h4>
+        <p><strong>Implication:</strong> ${g.implication}</p>
+        <p><strong>Decision this year:</strong> ${g.decision}</p>
+        <ul class="evidence-list">${evidenceItems}</ul>
+      `;
+      decisions.appendChild(block);
+    });
+
+    const noAction = document.getElementById("without-action");
+    const withAction = document.getElementById("with-action");
+    data.scenarios.withoutAction.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      noAction.appendChild(li);
+    });
+    data.scenarios.withAction.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      withAction.appendChild(li);
     });
 
     const roadmap = document.getElementById("kpi-roadmap");
@@ -317,17 +488,19 @@
       const w1 = (k.y1 / max) * 100;
       const w2 = (k.y2 / max) * 100;
       const w3 = (k.y3 / max) * 100;
+      const src = sourceMap[k.source];
 
       const block = document.createElement("div");
       block.className = "kpi";
       block.innerHTML = `
         <div class="kpi-head">
           <div class="kpi-name">${k.kpi}</div>
-          <div class="kpi-unit">${k.unit}</div>
+          <div class="meta">${k.unit} | ${k.basis} [${src.id}]</div>
         </div>
-        <div class="track"><div class="milestone" style="width:${w1}%; opacity:0.4;"></div></div>
-        <div class="track" style="margin-top:6px;"><div class="milestone" style="width:${w2}%; opacity:0.7;"></div></div>
-        <div class="track" style="margin-top:6px;"><div class="milestone" style="width:${w3}%; opacity:1;"></div></div>
+        <div class="meta">Baseline ${k.baseline} -> Y1 ${k.y1} -> Y2 ${k.y2} -> Y3 ${k.y3}</div>
+        <div class="track"><div class="m" style="width:${w1}%; opacity:.45"></div></div>
+        <div class="track"><div class="m" style="width:${w2}%; opacity:.72"></div></div>
+        <div class="track"><div class="m" style="width:${w3}%; opacity:1"></div></div>
       `;
       roadmap.appendChild(block);
     });
@@ -335,7 +508,7 @@
     const sources = document.getElementById("sources");
     data.sources.forEach((s) => {
       const li = document.createElement("li");
-      li.textContent = s;
+      li.innerHTML = `<strong>[${s.id}] ${s.short}</strong> (${s.year}) - ${s.title}. <a href="${s.url}" target="_blank" rel="noopener noreferrer">Source link</a>`;
       sources.appendChild(li);
     });
   </script>
