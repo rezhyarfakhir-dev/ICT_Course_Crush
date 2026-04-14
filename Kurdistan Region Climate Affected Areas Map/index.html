@@ -38,6 +38,11 @@
       width: 100%;
       height: 100%;
       background: #d8e7ec;
+      margin-top: 0;
+    }
+
+    body {
+      padding-top: 160px;
     }
 
     .panel {
@@ -116,21 +121,47 @@
       max-width: 100%;
     }
 
+    .top-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1040;
+      background: linear-gradient(to bottom, rgba(255, 252, 247, 0.98), rgba(255, 252, 247, 0.94) 85%, rgba(255, 252, 247, 0));
+      backdrop-filter: blur(12px);
+      box-shadow: 0 2px 8px rgba(23, 33, 43, 0.08);
+      padding: 18px;
+      padding-bottom: 24px;
+    }
+
+    .top-banner-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
     .header {
-      top: 18px;
-      left: 18px;
-      padding: 18px 20px;
-      width: min(440px, calc(100vw - 36px));
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
     }
 
     .search-banner {
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(560px, calc(100vw - 140px));
-      padding: 14px;
-      z-index: 1040;
-      background: rgba(255, 252, 247, 0.96);
+      position: relative;
+      top: auto;
+      left: auto;
+      transform: none;
+      width: 100%;
+      padding: 0;
+      z-index: auto;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
     }
 
     .search-banner form {
@@ -138,23 +169,37 @@
       grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 8px;
       align-items: center;
+      background: rgba(255,255,255,0.96);
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(23, 33, 43, 0.08);
     }
 
     .search-banner input {
       width: 100%;
-      border: 1px solid rgba(23, 33, 43, 0.12);
-      border-radius: 14px;
-      padding: 11px 12px;
-      font-size: 0.88rem;
-      background: rgba(255,255,255,0.96);
-      color: var(--ink);
-      font-family: inherit;
+      border: 1px solid rgba(23, 33, 43, 0.12) !important;
+      border-radius: 12px !important;
+      padding: 10px 12px !important;
+      font-size: 0.88rem !important;
+      background: rgba(255,255,255,0.96) !important;
+      color: var(--ink) !important;
+      font-family: inherit !important;
     }
 
     .search-banner button {
       width: auto;
       min-width: 88px;
-      padding: 11px 14px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fff8ef, #f4ece1) !important;
+      border: 1px solid rgba(23, 33, 43, 0.12) !important;
+      font-weight: 700 !important;
+      cursor: pointer !important;
+    }
+
+    .search-banner button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(23, 33, 43, 0.08);
     }
 
     .search-status {
@@ -596,20 +641,23 @@
 <body>
 <div id="map"></div>
 
-<div class="panel search-banner">
-  <form id="apiSearchForm">
-    <input id="apiSearchInput" type="search" placeholder="Search a city, district, or landmark" aria-label="Search location" />
-    <button id="apiSearchBtn" type="submit">Search</button>
-    <button id="apiSearchClear" type="button">Clear</button>
-  </form>
-  <div class="search-status" id="apiSearchStatus">Search the map with live geocoding or jump to a visible region name.</div>
-  <div class="search-suggestions" id="apiSearchSuggestions"></div>
-</div>
-
-<div class="panel header">
-  <div class="eyebrow">Kurdistan climate view</div>
-  <h1>Kurdistan Region Climate Affected Areas Map</h1>
-  <p>Explore climate pressure across governorates, switch the active metric, and isolate the most vulnerable areas with threshold filters.</p>
+<div class="top-banner">
+  <div class="top-banner-content">
+    <div class="panel header">
+      <div class="eyebrow">Kurdistan climate view</div>
+      <h1>Kurdistan Region Climate Affected Areas Map</h1>
+      <p>Explore climate pressure across governorates, switch the active metric, and isolate the most vulnerable areas with threshold filters.</p>
+    </div>
+    <div class="search-banner">
+      <form id="apiSearchForm">
+        <input id="apiSearchInput" type="search" placeholder="Search a city, district, or landmark" aria-label="Search location" />
+        <button id="apiSearchBtn" type="submit">Search</button>
+        <button id="apiSearchClear" type="button">Clear</button>
+      </form>
+      <div class="search-status" id="apiSearchStatus">Search the map with live geocoding or jump to a visible region name.</div>
+      <div class="search-suggestions" id="apiSearchSuggestions"></div>
+    </div>
+  </div>
 </div>
 
 <div class="dock">

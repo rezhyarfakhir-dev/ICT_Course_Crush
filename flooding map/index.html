@@ -36,6 +36,11 @@
     #map {
       width: 100%;
       height: 100%;
+      margin-top: 0;
+    }
+
+    body {
+      padding-top: 160px;
     }
 
     .panel {
@@ -112,21 +117,47 @@
       max-width: 100%;
     }
 
+    .top-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1040;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.94) 85%, rgba(255, 255, 255, 0));
+      backdrop-filter: blur(12px);
+      box-shadow: 0 2px 8px rgba(20, 32, 42, 0.08);
+      padding: 18px;
+      padding-bottom: 24px;
+    }
+
+    .top-banner-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
     .header {
-      top: 18px;
-      left: 18px;
-      padding: 18px 20px;
-      max-width: 430px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
     }
 
     .search-banner {
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(620px, calc(100vw - 140px));
-      padding: 14px;
-      z-index: 1040;
-      background: rgba(255, 255, 255, 0.95);
+      position: relative;
+      top: auto;
+      left: auto;
+      transform: none;
+      width: 100%;
+      padding: 0;
+      z-index: auto;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
     }
 
     .search-banner form {
@@ -134,15 +165,34 @@
       grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 8px;
       align-items: center;
+      background: rgba(255,255,255,0.95);
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(20, 32, 42, 0.08);
     }
 
     .search-banner input {
       width: 100%;
+      border: 1px solid rgba(20, 32, 42, 0.08) !important;
+      padding: 10px 12px !important;
+      border-radius: 12px !important;
+      background: rgba(255,255,255,0.96) !important;
     }
 
     .search-banner button {
       min-width: 88px;
       width: auto;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ffffff, #eef5f7) !important;
+      border: 1px solid rgba(20, 32, 42, 0.12) !important;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .search-banner button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(20, 32, 42, 0.08);
     }
 
     .search-status {
@@ -426,16 +476,36 @@
     }
 
     @media (max-width: 860px) {
-      .search-banner {
-        top: 12px;
-        width: calc(100vw - 24px);
+      .top-banner {
+        padding: 12px;
+        padding-bottom: 18px;
+      }
+
+      .top-banner-content {
+        gap: 12px;
       }
 
       .search-banner form {
         grid-template-columns: 1fr;
+        gap: 6px;
       }
 
-      .header,
+      .header {
+        padding: 0 !important;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .header p {
+        font-size: 0.85rem;
+      }
+
+      body {
+        padding-top: 180px;
+      }
+
       .dock {
         width: calc(100vw - 36px);
         max-width: calc(100vw - 36px);
@@ -452,20 +522,23 @@
 <body>
   <div id="map"></div>
 
-  <div class="panel search-banner">
-    <form id="apiSearchForm">
-      <input id="apiSearchInput" type="search" placeholder="Search a city, river basin, or country" aria-label="Search location" />
-      <button id="apiSearchBtn" type="submit">Search</button>
-      <button id="apiSearchClear" type="button">Clear</button>
-    </form>
-    <div class="search-status" id="apiSearchStatus">Top search uses live geocoding. The filter search below still narrows flood events locally.</div>
-    <div class="search-suggestions" id="apiSearchSuggestions"></div>
-  </div>
-
-  <div class="panel header">
-    <div class="eyebrow">DFO archive atlas</div>
-    <h1>Global flood events at a glance.</h1>
-    <p>Explore the Global Active Archive of Large Flood Events with filters for impact, severity, validation, date range, and location context.</p>
+  <div class="top-banner">
+    <div class="top-banner-content">
+      <div class="panel header">
+        <div class="eyebrow">DFO archive atlas</div>
+        <h1>Global flood events at a glance.</h1>
+        <p>Explore the Global Active Archive of Large Flood Events with filters for impact, severity, validation, date range, and location context.</p>
+      </div>
+      <div class="search-banner">
+        <form id="apiSearchForm">
+          <input id="apiSearchInput" type="search" placeholder="Search a city, river basin, or country" aria-label="Search location" />
+          <button id="apiSearchBtn" type="submit">Search</button>
+          <button id="apiSearchClear" type="button">Clear</button>
+        </form>
+        <div class="search-status" id="apiSearchStatus">Top search uses live geocoding. The filter search below still narrows flood events locally.</div>
+        <div class="search-suggestions" id="apiSearchSuggestions"></div>
+      </div>
+    </div>
   </div>
 
   <div class="dock">
