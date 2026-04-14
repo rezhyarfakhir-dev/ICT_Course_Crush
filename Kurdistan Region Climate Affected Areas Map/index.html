@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kurdistan Region Climate Affected Areas Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --card: rgba(255, 255, 255, 0.96);
+      --border: #cbd5e1;
+      --accent: #1d4ed8;
+    }
+
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--ink);
+    }
+
+    #map { width: 100%; height: 100%; background: #cfe2f3; }
+
+    .panel {
+      position: absolute;
+      z-index: 1000;
+      background: var(--card);
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(15,23,42,0.18);
+      backdrop-filter: blur(4px);
+    }
+
+    /* ── Header ── */
+    .header {
+      top: 14px; left: 14px;
+      padding: 12px 14px;
+      max-width: 340px;
+    }
+    .header h1 { margin: 0 0 4px; font-size: 1rem; line-height: 1.25; }
+    .header p  { margin: 0; font-size: 0.82rem; color: var(--muted); }
+
+    /* ── Filters ── */
+    .filters {
+      top: 120px; left: 14px;
+      padding: 12px;
+      width: min(320px, calc(100vw - 28px));
+      max-height: 65vh;
+      overflow: auto;
+    }
+    .filters h2 { margin: 0 0 10px; font-size: 0.95rem; }
+
+    .filter-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    label { font-size: 0.78rem; font-weight: 600; color: #334155; }
+
+    select, input[type="range"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 0.85rem;
+      background: #fff;
+      color: var(--ink);
+      box-sizing: border-box;
+    }
+    input[type="range"] { padding: 4px 0; accent-color: var(--accent); }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .checkbox-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    }
+    .checkbox-row input { width: 16px; height: 16px; margin: 0; }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      background: #f8fafc;
+      color: var(--ink);
+    }
+    button:hover { background: #e2e8f0; }
+
+    .pill {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+
+    /* ── Info panel ── */
+    .info {
+      top: 14px; right: 14px;
+      padding: 14px 16px;
+      width: min(300px, calc(100vw - 28px));
+      font-size: 0.88rem;
+    }
+    .info h2 { margin: 0 0 6px; font-size: 1rem; }
+    .info .desc { color: var(--muted); font-size: 0.82rem; margin: 0 0 12px; }
+
+    .stat { margin-bottom: 12px; }
+    .stat-label { display: block; font-weight: 600; margin-bottom: 4px; }
+    .bar-bg { width: 100%; height: 9px; background: #e2e8f0; border-radius: 5px; }
+    .bar-fill { height: 100%; border-radius: 5px; transition: width .5s ease-out; }
+    .drought .bar-fill { background: #d97706; }
+    .temp    .bar-fill { background: #dc2626; }
+    .desert  .bar-fill { background: #b45309; }
+
+    .findings { margin-top: 12px; }
+    .findings h3 { margin: 0 0 6px; font-size: 0.88rem; }
+    .findings ul { margin: 0; padding-left: 1.2rem; font-size: 0.82rem; color: var(--muted); }
+    .findings ul li { margin-bottom: 4px; }
+
+    .default-msg { font-size: 0.85rem; color: var(--muted); }
+
+    /* ── Legend ── */
+    .legend {
+      bottom: 14px; left: 14px;
+      padding: 10px 13px;
+      font-size: 0.85rem;
+    }
+    .legend strong { display: block; margin-bottom: 5px; font-size: 0.85rem; }
+    .legend-item { display: flex; align-items: center; margin: 4px 0; }
+    .swatch { width: 16px; height: 16px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; }
+
+    /* ── Responsive ── */
+    @media (max-width: 750px) {
+      .filters { top: auto; bottom: 14px; max-height: 36vh; }
+      .info { top: auto; right: auto; left: 14px; bottom: 200px; max-height: 30vh; overflow: auto; }
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+
+<!-- Header -->
+<div class="panel header">
+  <h1>Kurdistan Region Climate Affected Areas Map</h1>
+  <p>Hover to highlight, click a governorate to see detailed climate data.</p>
+</div>
+
+<!-- Filters -->
+<div class="panel filters">
+  <h2>Filters &amp; Tools</h2>
+
+  <div class="filter-row">
+    <label for="metricSelect">Visualise metric</label>
+    <select id="metricSelect">
+      <option value="droughtRisk">Drought Risk (%)</option>
+      <option value="desertification">Desertification (%)</option>
+      <option value="tempIncrease">Temperature Increase (°C)</option>
+    </select>
+  </div>
+
+  <div class="filter-row">
+    <label for="regionSelect">Governorate</label>
+    <select id="regionSelect">
+      <option value="">All governorates</option>
+    </select>
+  </div>
+
+  <div class="filter-row">
+    <label>Drought Risk range: <span id="droughtVal">0 – 100%</span></label>
+    <div class="range-row">
+      <div class="filter-row" style="margin:0">
+        <label for="droughtMin" style="font-size:0.72rem">Min</label>
+        <input type="range" id="droughtMin" min="0" max="100" value="0" step="5" />
+      </div>
+      <div class="filter-row" style="margin:0">
+        <label for="droughtMax" style="font-size:0.72rem">Max</label>
+        <input type="range" id="droughtMax" min="0" max="100" value="100" step="5" />
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <label>Desertification range: <span id="desertVal">0 – 100%</span></label>
+    <div class="range-row">
+      <div class="filter-row" style="margin:0">
+        <label for="desertMin" style="font-size:0.72rem">Min</label>
+        <input type="range" id="desertMin" min="0" max="100" value="0" step="5" />
+      </div>
+      <div class="filter-row" style="margin:0">
+        <label for="desertMax" style="font-size:0.72rem">Max</label>
+        <input type="range" id="desertMax" min="0" max="100" value="100" step="5" />
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <label>Temp Increase range: <span id="tempVal">0 – 5 °C</span></label>
+    <div class="range-row">
+      <div class="filter-row" style="margin:0">
+        <label for="tempMin" style="font-size:0.72rem">Min °C</label>
+        <input type="range" id="tempMin" min="0" max="5" value="0" step="0.1" />
+      </div>
+      <div class="filter-row" style="margin:0">
+        <label for="tempMax" style="font-size:0.72rem">Max °C</label>
+        <input type="range" id="tempMax" min="0" max="5" value="5" step="0.1" />
+      </div>
+    </div>
+  </div>
+
+  <div class="checkbox-row">
+    <input type="checkbox" id="highRiskOnly" />
+    <label for="highRiskOnly">Show only high-risk regions (drought &gt; 60%)</label>
+  </div>
+
+  <div class="btn-row">
+    <button id="fitBtn">Fit to Map</button>
+    <button id="resetBtn">Reset Filters</button>
+  </div>
+
+  <span class="pill" id="statusPill">Showing 6 regions</span>
+</div>
+
+<!-- Info panel -->
+<div class="panel info" id="infoPanel">
+  <h2>Region Details</h2>
+  <p class="default-msg desc">Click on a governorate to view specific climate change impact data.</p>
+  <p class="default-msg">The Kurdish Region of Iraq (KRI) is highly vulnerable to climate change, experiencing rapid temperature increases, decreased rainfall, and expanding desertification.</p>
+</div>
+
+<!-- Legend -->
+<div class="panel legend" id="legend">
+  <strong id="legendTitle">Drought Risk Level</strong>
+  <div id="legendItems"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+  /* ─── Map init ─── */
+  const map = L.map('map', { minZoom: 5 }).setView([35.5, 44.5], 7);
+  L.control.scale({ imperial: false }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  /* ─── Elements ─── */
+  const metricSelect  = document.getElementById('metricSelect');
+  const regionSelect  = document.getElementById('regionSelect');
+  const droughtMin    = document.getElementById('droughtMin');
+  const droughtMax    = document.getElementById('droughtMax');
+  const desertMin     = document.getElementById('desertMin');
+  const desertMax     = document.getElementById('desertMax');
+  const tempMin       = document.getElementById('tempMin');
+  const tempMax       = document.getElementById('tempMax');
+  const highRiskOnly  = document.getElementById('highRiskOnly');
+  const fitBtn        = document.getElementById('fitBtn');
+  const resetBtn      = document.getElementById('resetBtn');
+  const statusPill    = document.getElementById('statusPill');
+  const infoPanel     = document.getElementById('infoPanel');
+  const legendTitle   = document.getElementById('legendTitle');
+  const legendItems   = document.getElementById('legendItems');
+
+  /* ─── Colour scales ─── */
+  const SCALES = {
+    droughtRisk: {
+      title: 'Drought Risk Level',
+      stops: [
+        { max: 20,  fill: '#FFEDA0', label: 'Very Low (<20%)' },
+        { max: 30,  fill: '#FED976', label: 'Low (20–30%)' },
+        { max: 40,  fill: '#FEB24C', label: 'Moderate (30–40%)' },
+        { max: 50,  fill: '#FD8D3C', label: 'Elevated (40–50%)' },
+        { max: 60,  fill: '#FC4E2A', label: 'High (50–60%)' },
+        { max: 70,  fill: '#E31A1C', label: 'Very High (60–70%)' },
+        { max: 80,  fill: '#BD0026', label: 'Severe (70–80%)' },
+        { max: Infinity, fill: '#800026', label: 'Critical (>80%)' }
+      ]
+    },
+    desertification: {
+      title: 'Desertification Level',
+      stops: [
+        { max: 20,  fill: '#ffffb2', label: 'Very Low (<20%)' },
+        { max: 40,  fill: '#fecc5c', label: 'Low (20–40%)' },
+        { max: 60,  fill: '#fd8d3c', label: 'Moderate (40–60%)' },
+        { max: 80,  fill: '#f03b20', label: 'High (60–80%)' },
+        { max: Infinity, fill: '#bd0026', label: 'Critical (>80%)' }
+      ]
+    },
+    tempIncrease: {
+      title: 'Temperature Increase (°C)',
+      stops: [
+        { max: 1.5,     fill: '#ffffcc', label: '<1.5 °C' },
+        { max: 2.0,     fill: '#c7e9b4', label: '1.5–2.0 °C' },
+        { max: 2.5,     fill: '#7fcdbb', label: '2.0–2.5 °C' },
+        { max: 3.0,     fill: '#41b6c4', label: '2.5–3.0 °C' },
+        { max: 3.5,     fill: '#1d91c0', label: '3.0–3.5 °C' },
+        { max: Infinity, fill: '#0c2c84', label: '>3.5 °C' }
+      ]
+    }
+  };
+
+  const colourFor = (metric, value) => {
+    const stops = SCALES[metric].stops;
+    for (const stop of stops) {
+      if (value <= stop.max) return stop.fill;
+    }
+    return stops[stops.length - 1].fill;
+  };
+
+  const buildLegend = (metric) => {
+    const { title, stops } = SCALES[metric];
+    legendTitle.textContent = title;
+    legendItems.innerHTML = stops.map(s =>
+      `<div class="legend-item"><span class="swatch" style="background:${s.fill}"></span>${s.label}</div>`
+    ).join('');
+  };
+
+  /* ─── GeoJSON state ─── */
+  let allFeatures = [];
+  let geojsonLayer = null;
+  let selectedName = null;
+
+  const defaultStyle = (feature) => {
+    const metric   = metricSelect.value;
+    const value    = feature.properties[metric];
+    const visible  = featureVisible(feature);
+    return {
+      fillColor:   colourFor(metric, value),
+      weight:      2,
+      opacity:     visible ? 1 : 0,
+      color:       'white',
+      dashArray:   '3',
+      fillOpacity: visible ? 0.75 : 0
+    };
+  };
+
+  const highlightStyle = (feature) => ({
+    ...defaultStyle(feature),
+    weight:      5,
+    color:       '#334155',
+    dashArray:   '',
+    fillOpacity: 0.92
+  });
+
+  const featureVisible = (feature) => {
+    const p = feature.properties;
+    if (regionSelect.value && p.name !== regionSelect.value) return false;
+    if (p.droughtRisk    < Number(droughtMin.value) || p.droughtRisk    > Number(droughtMax.value)) return false;
+    if (p.desertification < Number(desertMin.value)  || p.desertification > Number(desertMax.value))  return false;
+    if (p.tempIncrease   < Number(tempMin.value)    || p.tempIncrease   > Number(tempMax.value))    return false;
+    if (highRiskOnly.checked && p.droughtRisk <= 60) return false;
+    return true;
+  };
+
+  const updateLayer = () => {
+    if (!geojsonLayer) return;
+    let count = 0;
+    geojsonLayer.eachLayer((layer) => {
+      const visible = featureVisible(layer.feature);
+      layer.setStyle(defaultStyle(layer.feature));
+      if (visible) count++;
+    });
+    buildLegend(metricSelect.value);
+    statusPill.textContent = `Showing ${count} of ${allFeatures.length} regions`;
+  };
+
+  const fitVisible = () => {
+    if (!geojsonLayer) return;
+    const bounds = L.latLngBounds([]);
+    geojsonLayer.eachLayer((layer) => {
+      if (featureVisible(layer.feature)) bounds.extend(layer.getBounds());
+    });
+    if (bounds.isValid()) map.fitBounds(bounds.pad(0.15));
+  };
+
+  const showInfo = (props) => {
+    const drPct  = props.droughtRisk;
+    const tmpPct = (props.tempIncrease / 5) * 100;
+    const dsPct  = props.desertification;
+    infoPanel.innerHTML = `
+      <h2>${props.name}</h2>
+      <p class="desc">${props.description}</p>
+      <div class="stat drought">
+        <span class="stat-label">Drought Risk: ${drPct}%</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${drPct}%"></div></div>
+      </div>
+      <div class="stat temp">
+        <span class="stat-label">Temp Increase: +${props.tempIncrease}°C</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${tmpPct.toFixed(1)}%"></div></div>
+      </div>
+      <div class="stat desert">
+        <span class="stat-label">Desertification: ${dsPct}%</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${dsPct}%"></div></div>
+      </div>
+      <div class="findings">
+        <h3>Climate Vulnerability</h3>
+        <ul>
+          <li>Water resource depletion</li>
+          <li>Loss of biodiversity</li>
+          <li>Impact on rain-fed agriculture</li>
+          <li>Increased frequency of dust storms</li>
+        </ul>
+      </div>
+    `;
+  };
+
+  const resetInfo = () => {
+    infoPanel.innerHTML = `
+      <h2>Region Details</h2>
+      <p class="default-msg desc">Click on a governorate to view specific climate change impact data.</p>
+      <p class="default-msg">The Kurdish Region of Iraq (KRI) is highly vulnerable to climate change, experiencing rapid temperature increases, decreased rainfall, and expanding desertification.</p>
+    `;
+  };
+
+  /* ─── Range labels ─── */
+  const updateRangeLabels = () => {
+    document.getElementById('droughtVal').textContent =
+      `${droughtMin.value} – ${droughtMax.value}%`;
+    document.getElementById('desertVal').textContent =
+      `${desertMin.value} – ${desertMax.value}%`;
+    document.getElementById('tempVal').textContent =
+      `${Number(tempMin.value).toFixed(1)} – ${Number(tempMax.value).toFixed(1)} °C`;
+  };
+
+  /* ─── Load GeoJSON ─── */
+  fetch('./governorates.json')
+    .then((r) => r.json())
+    .then((data) => {
+      allFeatures = data.features;
+
+      /* Populate region dropdown */
+      const names = allFeatures.map((f) => f.properties.name).sort();
+      names.forEach((n) => {
+        const opt = document.createElement('option');
+        opt.value = n; opt.textContent = n;
+        regionSelect.appendChild(opt);
+      });
+
+      buildLegend(metricSelect.value);
+
+      geojsonLayer = L.geoJSON(data, {
+        style: defaultStyle,
+        onEachFeature: (feature, layer) => {
+          layer.bindTooltip(feature.properties.name, { sticky: true });
+
+          layer.on('mouseover', (e) => {
+            if (featureVisible(feature)) {
+              e.target.setStyle(highlightStyle(feature));
+              e.target.bringToFront();
+            }
+          });
+          layer.on('mouseout', (e) => {
+            e.target.setStyle(defaultStyle(feature));
+          });
+          layer.on('click', () => {
+            if (!featureVisible(feature)) return;
+            selectedName = feature.properties.name;
+            showInfo(feature.properties);
+          });
+        }
+      }).addTo(map);
+
+      statusPill.textContent = `Showing ${allFeatures.length} of ${allFeatures.length} regions`;
+      map.fitBounds(geojsonLayer.getBounds().pad(0.1));
+    })
+    .catch(() => {
+      statusPill.textContent = 'Failed to load data';
+    });
+
+  /* ─── Event listeners ─── */
+  [metricSelect, regionSelect, highRiskOnly].forEach((el) =>
+    el.addEventListener('change', updateLayer));
+
+  [droughtMin, droughtMax, desertMin, desertMax, tempMin, tempMax].forEach((el) => {
+    el.addEventListener('input', () => { updateRangeLabels(); updateLayer(); });
+  });
+
+  fitBtn.addEventListener('click', fitVisible);
+
+  resetBtn.addEventListener('click', () => {
+    metricSelect.value   = 'droughtRisk';
+    regionSelect.value   = '';
+    droughtMin.value     = 0;
+    droughtMax.value     = 100;
+    desertMin.value      = 0;
+    desertMax.value      = 100;
+    tempMin.value        = 0;
+    tempMax.value        = 5;
+    highRiskOnly.checked = false;
+    updateRangeLabels();
+    updateLayer();
+    resetInfo();
+    selectedName = null;
+  });
+</script>
+</body>
+</html>
