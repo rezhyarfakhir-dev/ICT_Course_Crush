@@ -94,15 +94,124 @@
       margin: 4px 0;
     }
 
+    .controls {
+      top: 120px;
+      left: 14px;
+      padding: 12px;
+      width: min(380px, calc(100vw - 28px));
+      font-size: 0.9rem;
+      max-height: 62vh;
+      overflow: auto;
+    }
+
+    .controls h2 {
+      margin: 0 0 10px;
+      font-size: 0.98rem;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .control-row.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    select,
+    input,
+    button {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 7px 8px;
+      font-size: 0.88rem;
+      background: #fff;
+      color: #0f172a;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .button-row button {
+      cursor: pointer;
+      font-weight: 600;
+      background: #f8fafc;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .checkbox-row input {
+      margin: 0;
+      width: 16px;
+      height: 16px;
+    }
+
+    .small-note {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: #475569;
+      line-height: 1.3;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
     @media (max-width: 720px) {
-      .header, .stats {
+      .header, .stats, .controls {
         max-width: calc(100vw - 28px);
       }
+
       .stats {
         top: auto;
         right: auto;
         left: 14px;
         bottom: 120px;
+      }
+
+      .controls {
+        top: auto;
+        bottom: 14px;
+        max-height: 34vh;
+      }
+
+      .legend {
+        left: auto;
+        right: 14px;
+      }
+
+      .control-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -119,6 +228,76 @@
     <h2>Loading data...</h2>
   </div>
 
+  <div class="panel controls">
+    <h2>Filters and Tools</h2>
+    <div class="control-grid">
+      <div class="control-row full">
+        <label for="searchInput">Search country or cause</label>
+        <input id="searchInput" type="text" placeholder="e.g. Iraq or Heavy rain" />
+      </div>
+
+      <div class="control-row">
+        <label for="countryFilter">Country</label>
+        <select id="countryFilter">
+          <option value="">All countries</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <label for="causeFilter">Cause</label>
+        <select id="causeFilter">
+          <option value="">All causes</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <label for="severityFilter">Severity band</label>
+        <select id="severityFilter">
+          <option value="">All</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <label for="validationFilter">Validation source</label>
+        <select id="validationFilter">
+          <option value="">All sources</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <label for="fromYear">From year</label>
+        <select id="fromYear">
+          <option value="">Any</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <label for="toYear">To year</label>
+        <select id="toYear">
+          <option value="">Any</option>
+        </select>
+      </div>
+
+      <div class="control-row full checkbox-row">
+        <input id="impactOnly" type="checkbox" />
+        <label for="impactOnly">Only events with reported deaths or displacement</label>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button id="fitBtn" type="button">Fit Results</button>
+      <button id="locateBtn" type="button">Locate Me</button>
+      <button id="resetBtn" type="button">Reset Filters</button>
+      <button id="clearSearchBtn" type="button">Clear Search</button>
+    </div>
+
+    <div id="activeStatus" class="status-pill">Showing all events</div>
+    <div class="small-note">Tip: click any marker to see details. Use Fit Results after filtering to zoom directly to matching events.</div>
+  </div>
+
   <div class="panel legend">
     <strong>Severity</strong>
     <div class="legend-item"><span class="swatch" style="background:#67a9cf"></span>Low</div>
@@ -129,12 +308,33 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
     const map = L.map('map', { minZoom: 2 }).setView([22, 10], 2);
+    L.control.scale({ imperial: false }).addTo(map);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     const statsEl = document.getElementById('stats');
+    const activeStatusEl = document.getElementById('activeStatus');
+
+    const controls = {
+      searchInput: document.getElementById('searchInput'),
+      countryFilter: document.getElementById('countryFilter'),
+      causeFilter: document.getElementById('causeFilter'),
+      severityFilter: document.getElementById('severityFilter'),
+      validationFilter: document.getElementById('validationFilter'),
+      fromYear: document.getElementById('fromYear'),
+      toYear: document.getElementById('toYear'),
+      impactOnly: document.getElementById('impactOnly'),
+      fitBtn: document.getElementById('fitBtn'),
+      locateBtn: document.getElementById('locateBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      clearSearchBtn: document.getElementById('clearSearchBtn')
+    };
+
+    let allFeatures = [];
+    let filteredFeatures = [];
+    const markerGroup = L.layerGroup().addTo(map);
 
     const styleFor = (severity) => {
       if (!severity || severity <= 1) return { color: '#2166ac', fillColor: '#67a9cf', radius: 3 };
@@ -142,49 +342,180 @@
       return { color: '#b2182b', fillColor: '#ef8a62', radius: 5 };
     };
 
+    const severityBand = (value) => {
+      if (!value || value <= 1) return 'low';
+      if (value <= 1.8) return 'medium';
+      return 'high';
+    };
+
+    const getYear = (dateString) => {
+      if (!dateString || typeof dateString !== 'string') return null;
+      const year = Number(dateString.slice(0, 4));
+      return Number.isFinite(year) ? year : null;
+    };
+
+    const optionSet = (selectEl, values, defaultLabel) => {
+      selectEl.innerHTML = '';
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = defaultLabel;
+      selectEl.appendChild(defaultOpt);
+
+      values.forEach((value) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        selectEl.appendChild(option);
+      });
+    };
+
+    const updateStats = () => {
+      const totalDead = filteredFeatures.reduce((acc, feature) => acc + Number(feature.properties.dead || 0), 0);
+      const totalDisplaced = filteredFeatures.reduce((acc, feature) => acc + Number(feature.properties.displaced || 0), 0);
+
+      statsEl.innerHTML = `
+        <h2>Filtered Snapshot</h2>
+        <p><strong>Events:</strong> ${filteredFeatures.length.toLocaleString()} / ${allFeatures.length.toLocaleString()}</p>
+        <p><strong>Deaths:</strong> ${totalDead.toLocaleString()}</p>
+        <p><strong>Displaced:</strong> ${totalDisplaced.toLocaleString()}</p>
+      `;
+    };
+
+    const createPopupHtml = (properties) => `
+      <strong>${properties.country || 'Unknown country'}</strong><br>
+      Cause: ${properties.mainCause || 'n/a'}<br>
+      Severity: ${properties.severity ?? 'n/a'}<br>
+      Validation: ${properties.validation || 'n/a'}<br>
+      Deaths: ${properties.dead ?? 'n/a'}<br>
+      Displaced: ${properties.displaced ?? 'n/a'}<br>
+      Area: ${properties.areaKm2 ?? 'n/a'} km²<br>
+      Began: ${properties.began || 'n/a'}<br>
+      Ended: ${properties.ended || 'n/a'}
+    `;
+
+    const renderFilteredMarkers = () => {
+      markerGroup.clearLayers();
+
+      filteredFeatures.forEach((feature) => {
+        const coords = feature.geometry && feature.geometry.coordinates;
+        if (!coords || coords.length < 2) return;
+
+        const lat = Number(coords[1]);
+        const lng = Number(coords[0]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+        const style = styleFor(feature.properties.severity);
+        const marker = L.circleMarker([lat, lng], {
+          radius: style.radius,
+          color: style.color,
+          weight: 1,
+          fillColor: style.fillColor,
+          fillOpacity: 0.75
+        });
+
+        marker.bindPopup(createPopupHtml(feature.properties));
+        markerGroup.addLayer(marker);
+      });
+
+      activeStatusEl.textContent = filteredFeatures.length
+        ? `Showing ${filteredFeatures.length.toLocaleString()} matching events`
+        : 'No events match the current filters';
+
+      updateStats();
+    };
+
+    const applyFilters = () => {
+      const searchText = controls.searchInput.value.trim().toLowerCase();
+      const selectedCountry = controls.countryFilter.value;
+      const selectedCause = controls.causeFilter.value;
+      const selectedSeverityBand = controls.severityFilter.value;
+      const selectedValidation = controls.validationFilter.value;
+      const fromYear = Number(controls.fromYear.value || 0);
+      const toYear = Number(controls.toYear.value || 9999);
+      const impactOnly = controls.impactOnly.checked;
+
+      filteredFeatures = allFeatures.filter((feature) => {
+        const p = feature.properties || {};
+        const textHaystack = `${p.country || ''} ${p.mainCause || ''}`.toLowerCase();
+        const eventYear = getYear(p.began);
+        const band = severityBand(Number(p.severity));
+        const hasImpact = Number(p.dead || 0) > 0 || Number(p.displaced || 0) > 0;
+
+        if (searchText && !textHaystack.includes(searchText)) return false;
+        if (selectedCountry && p.country !== selectedCountry) return false;
+        if (selectedCause && p.mainCause !== selectedCause) return false;
+        if (selectedSeverityBand && band !== selectedSeverityBand) return false;
+        if (selectedValidation && p.validation !== selectedValidation) return false;
+        if (eventYear && (eventYear < fromYear || eventYear > toYear)) return false;
+        if (impactOnly && !hasImpact) return false;
+        return true;
+      });
+
+      renderFilteredMarkers();
+    };
+
+    const fitToResults = () => {
+      if (!markerGroup.getLayers().length) return;
+      const bounds = markerGroup.getBounds();
+      if (bounds && bounds.isValid()) {
+        map.fitBounds(bounds.pad(0.15));
+      }
+    };
+
+    const resetFilters = () => {
+      controls.searchInput.value = '';
+      controls.countryFilter.value = '';
+      controls.causeFilter.value = '';
+      controls.severityFilter.value = '';
+      controls.validationFilter.value = '';
+      controls.fromYear.value = '';
+      controls.toYear.value = '';
+      controls.impactOnly.checked = false;
+      applyFilters();
+    };
+
     fetch('./floodEvents.geojson')
       .then((response) => response.json())
       .then((data) => {
-        let totalDead = 0;
-        let totalDisplaced = 0;
+        allFeatures = data.features || [];
 
-        data.features.forEach((feature) => {
-          totalDead += Number(feature.properties.dead || 0);
-          totalDisplaced += Number(feature.properties.displaced || 0);
+        const countries = [...new Set(allFeatures.map((f) => f.properties.country).filter(Boolean))].sort();
+        const causes = [...new Set(allFeatures.map((f) => f.properties.mainCause).filter(Boolean))].sort();
+        const validations = [...new Set(allFeatures.map((f) => f.properties.validation).filter(Boolean))].sort();
+        const years = [...new Set(allFeatures.map((f) => getYear(f.properties.began)).filter(Boolean))].sort((a, b) => a - b);
+
+        optionSet(controls.countryFilter, countries, 'All countries');
+        optionSet(controls.causeFilter, causes, 'All causes');
+        optionSet(controls.validationFilter, validations, 'All sources');
+        optionSet(controls.fromYear, years.map(String), 'Any');
+        optionSet(controls.toYear, years.map(String), 'Any');
+
+        controls.searchInput.addEventListener('input', applyFilters);
+        controls.countryFilter.addEventListener('change', applyFilters);
+        controls.causeFilter.addEventListener('change', applyFilters);
+        controls.severityFilter.addEventListener('change', applyFilters);
+        controls.validationFilter.addEventListener('change', applyFilters);
+        controls.fromYear.addEventListener('change', applyFilters);
+        controls.toYear.addEventListener('change', applyFilters);
+        controls.impactOnly.addEventListener('change', applyFilters);
+
+        controls.fitBtn.addEventListener('click', fitToResults);
+        controls.locateBtn.addEventListener('click', () => {
+          map.locate({ setView: true, maxZoom: 6, enableHighAccuracy: true });
+        });
+        controls.resetBtn.addEventListener('click', resetFilters);
+        controls.clearSearchBtn.addEventListener('click', () => {
+          controls.searchInput.value = '';
+          applyFilters();
         });
 
-        statsEl.innerHTML = `
-          <h2>Flood Archive Snapshot</h2>
-          <p><strong>Events:</strong> ${data.features.length.toLocaleString()}</p>
-          <p><strong>Total deaths:</strong> ${totalDead.toLocaleString()}</p>
-          <p><strong>Total displaced:</strong> ${totalDisplaced.toLocaleString()}</p>
-        `;
+        map.on('locationerror', () => {
+          alert('Could not detect your location in this browser session.');
+        });
 
-        L.geoJSON(data, {
-          pointToLayer: (feature, latlng) => {
-            const style = styleFor(feature.properties.severity);
-            return L.circleMarker(latlng, {
-              radius: style.radius,
-              color: style.color,
-              weight: 1,
-              fillColor: style.fillColor,
-              fillOpacity: 0.75
-            });
-          },
-          onEachFeature: (feature, layer) => {
-            const p = feature.properties;
-            layer.bindPopup(`
-              <strong>${p.country || 'Unknown country'}</strong><br>
-              Cause: ${p.mainCause || 'n/a'}<br>
-              Severity: ${p.severity ?? 'n/a'}<br>
-              Deaths: ${p.dead ?? 'n/a'}<br>
-              Displaced: ${p.displaced ?? 'n/a'}<br>
-              Area: ${p.areaKm2 ?? 'n/a'} km²<br>
-              Began: ${p.began || 'n/a'}<br>
-              Ended: ${p.ended || 'n/a'}
-            `);
-          }
-        }).addTo(map);
+        filteredFeatures = [...allFeatures];
+        renderFilteredMarkers();
+        fitToResults();
       })
       .catch((error) => {
         statsEl.innerHTML = '<h2>Failed to load flood data</h2><p>Please check that floodEvents.geojson is present.</p>';
