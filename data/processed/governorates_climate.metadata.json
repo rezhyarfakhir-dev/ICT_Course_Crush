@@ -1,0 +1,10 @@
+{
+  "generatedAt": "2026-04-14T13:02:21.509Z",
+  "generator": "build-climate-dataset.mjs",
+  "note": "Placeholder scaffold. Replace placeholder indicators with sourced calculations before release.",
+  "requiredBeforeRelease": [
+    "Populate sourceYear/sourceReference/license",
+    "Replace placeholder indicator values with computed values from approved sources",
+    "Run schema and geospatial QA checks"
+  ]
+}

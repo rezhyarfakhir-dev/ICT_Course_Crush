@@ -1,0 +1,259 @@
+{
+  "type": "FeatureCollection",
+  "generatedAt": "2026-04-14T13:02:21.509Z",
+  "generationMethod": "scripts/build-climate-dataset.mjs",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Duhok",
+        "adminCode": null,
+        "droughtRisk": 45,
+        "tempIncrease": 2.1,
+        "desertification": 30,
+        "confidence": "low",
+        "sourceStatus": "placeholder",
+        "sourceYear": null,
+        "sourceReference": null,
+        "license": null
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              42.5,
+              36.8
+            ],
+            [
+              43.5,
+              37.3
+            ],
+            [
+              44.3,
+              37.2
+            ],
+            [
+              44,
+              36.6
+            ],
+            [
+              43,
+              36.4
+            ],
+            [
+              42.5,
+              36.8
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Erbil",
+        "adminCode": null,
+        "droughtRisk": 60,
+        "tempIncrease": 2.5,
+        "desertification": 55,
+        "confidence": "low",
+        "sourceStatus": "placeholder",
+        "sourceYear": null,
+        "sourceReference": null,
+        "license": null
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              43.5,
+              35.8
+            ],
+            [
+              44.5,
+              36.8
+            ],
+            [
+              45.2,
+              36.6
+            ],
+            [
+              44.8,
+              35.5
+            ],
+            [
+              43.5,
+              35.8
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sulaymaniyah",
+        "adminCode": null,
+        "droughtRisk": 50,
+        "tempIncrease": 2.2,
+        "desertification": 40,
+        "confidence": "low",
+        "sourceStatus": "placeholder",
+        "sourceYear": null,
+        "sourceReference": null,
+        "license": null
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              44.8,
+              35.5
+            ],
+            [
+              45.8,
+              36.4
+            ],
+            [
+              46.3,
+              35.8
+            ],
+            [
+              45.5,
+              34.8
+            ],
+            [
+              44.8,
+              35.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Halabja",
+        "adminCode": null,
+        "droughtRisk": 55,
+        "tempIncrease": 2.3,
+        "desertification": 45,
+        "confidence": "low",
+        "sourceStatus": "placeholder",
+        "sourceYear": null,
+        "sourceReference": null,
+        "license": null
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              45.8,
+              35
+            ],
+            [
+              46.2,
+              35.3
+            ],
+            [
+              46.5,
+              35
+            ],
+            [
+              46,
+              34.7
+            ],
+            [
+              45.8,
+              35
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kirkuk",
+        "adminCode": null,
+        "droughtRisk": 85,
+        "tempIncrease": 3.2,
+        "desertification": 80,
+        "confidence": "low",
+        "sourceStatus": "placeholder",
+        "sourceYear": null,
+        "sourceReference": null,
+        "license": null
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              43.8,
+              35.2
+            ],
+            [
+              44.8,
+              35.5
+            ],
+            [
+              44.5,
+              34.8
+            ],
+            [
+              43.8,
+              35.2
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Diyala",
+        "adminCode": null,
+        "droughtRisk": 90,
+        "tempIncrease": 3.5,
+        "desertification": 85,
+        "confidence": "low",
+        "sourceStatus": "placeholder",
+        "sourceYear": null,
+        "sourceReference": null,
+        "license": null
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              44.5,
+              34.8
+            ],
+            [
+              45.5,
+              34.8
+            ],
+            [
+              45.5,
+              33.5
+            ],
+            [
+              44.3,
+              33.8
+            ],
+            [
+              44.5,
+              34.8
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

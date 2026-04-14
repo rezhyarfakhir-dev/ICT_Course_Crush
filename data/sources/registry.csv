@@ -1,0 +1,5 @@
+dataset_id,indicator,provider,source_url,spatial_level,time_coverage,update_frequency,license,license_url,method_notes,status
+WB_CCKP_TEMP,tempIncrease,World Bank Climate Change Knowledge Portal,https://climateknowledgeportal.worldbank.org/country/iraq,country,Historical+Projection,TBD,TBD,TBD,Use country signal as context until subnational source is finalized,candidate
+FAO_AQUASTAT_WATER,droughtRisk,FAO AQUASTAT,https://www.fao.org/aquastat/en/countries-and-basins/country-profiles/country/IRQ,country,TBD,TBD,TBD,TBD,Water stress context and drought proxy input only,candidate
+IPCC_AR6_CONTEXT,desertification,IPCC WGII AR6,https://www.ipcc.ch/report/ar6/wg2/,regional,TBD,ad-hoc,copyrighted report use as citation only,https://www.ipcc.ch/copyright/,Context citation not machine-data feed,candidate
+GEOBOUNDARIES_ADM1,boundaries,geoBoundaries,https://www.geoboundaries.org/countryDownloads.html,ADM1,TBD,periodic,CC-BY 4.0,https://creativecommons.org/licenses/by/4.0/,Administrative boundaries for map geometry,candidate

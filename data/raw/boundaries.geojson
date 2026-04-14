@@ -1,0 +1,89 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Duhok",
+        "droughtRisk": 45,
+        "tempIncrease": 2.1,
+        "desertification": 30,
+        "description": "Increasing water scarcity in mountainous areas and impacts on local agriculture."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[42.5, 36.8], [43.5, 37.3], [44.3, 37.2], [44.0, 36.6], [43.0, 36.4], [42.5, 36.8]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Erbil",
+        "droughtRisk": 60,
+        "tempIncrease": 2.5,
+        "desertification": 55,
+        "description": "Rapid urbanization coupled with decreasing groundwater levels and rising heatwaves."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[43.5, 35.8], [44.5, 36.8], [45.2, 36.6], [44.8, 35.5], [43.5, 35.8]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sulaymaniyah",
+        "droughtRisk": 50,
+        "tempIncrease": 2.2,
+        "desertification": 40,
+        "description": "Changes in precipitation patterns affecting the Dukan and Darbandikhan dams."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[44.8, 35.5], [45.8, 36.4], [46.3, 35.8], [45.5, 34.8], [44.8, 35.5]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Halabja",
+        "droughtRisk": 55,
+        "tempIncrease": 2.3,
+        "desertification": 45,
+        "description": "Significant impacts on the agricultural sector and natural water springs."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[45.8, 35.0], [46.2, 35.3], [46.5, 35.0], [46.0, 34.7], [45.8, 35.0]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kirkuk",
+        "droughtRisk": 85,
+        "tempIncrease": 3.2,
+        "desertification": 80,
+        "description": "Severe desertification risks and high temperature spikes in the summer months."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[43.8, 35.2], [44.8, 35.5], [44.5, 34.8], [43.8, 35.2]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Diyala",
+        "droughtRisk": 90,
+        "tempIncrease": 3.5,
+        "desertification": 85,
+        "description": "Critical water shortages in the Hamrin Basin leading to massive crop failures."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[44.5, 34.8], [45.5, 34.8], [45.5, 33.5], [44.3, 33.8], [44.5, 34.8]]]
+      }
+    }
+  ]
+}

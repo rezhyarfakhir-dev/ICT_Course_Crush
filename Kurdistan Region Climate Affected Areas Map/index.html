@@ -376,6 +376,57 @@
       color: var(--muted);
     }
 
+    .meta-card {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid rgba(23, 33, 43, 0.1);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.76rem;
+      margin: 6px 0;
+      color: #3d4b56;
+    }
+
+    .meta-key {
+      font-weight: 700;
+      color: #30414f;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      border: 1px solid transparent;
+    }
+
+    .badge-low {
+      background: rgba(190, 64, 50, 0.12);
+      color: #893429;
+      border-color: rgba(190, 64, 50, 0.22);
+    }
+
+    .badge-medium {
+      background: rgba(202, 130, 37, 0.14);
+      color: #805015;
+      border-color: rgba(202, 130, 37, 0.24);
+    }
+
+    .badge-high {
+      background: rgba(59, 138, 99, 0.16);
+      color: #1b5e3f;
+      border-color: rgba(59, 138, 99, 0.24);
+    }
+
     .legend {
       width: 100%;
       font-size: 0.84rem;
@@ -622,6 +673,25 @@
     }
   };
 
+  const DATA_CANDIDATES = [
+    '../data/processed/governorates_climate.geojson',
+    './governorates.json'
+  ];
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+  const confidenceBadge = (value) => {
+    const normalized = String(value || 'low').toLowerCase();
+    if (normalized === 'high') return '<span class="badge badge-high">High confidence</span>';
+    if (normalized === 'medium') return '<span class="badge badge-medium">Medium confidence</span>';
+    return '<span class="badge badge-low">Low confidence</span>';
+  };
+
   const colourFor = (metric, value) => {
     const stops = SCALES[metric].stops;
     for (const stop of stops) {
@@ -642,18 +712,24 @@
   let geojsonLayer = null;
 
   const featureVisible = (feature) => {
-    const p = feature.properties;
+    const p = feature.properties || {};
+    const droughtRiskValue = Number(p.droughtRisk);
+    const desertificationValue = Number(p.desertification);
+    const tempIncreaseValue = Number(p.tempIncrease);
+
     if (regionSelect.value && p.name !== regionSelect.value) return false;
-    if (p.droughtRisk < Number(droughtMin.value) || p.droughtRisk > Number(droughtMax.value)) return false;
-    if (p.desertification < Number(desertMin.value) || p.desertification > Number(desertMax.value)) return false;
-    if (p.tempIncrease < Number(tempMin.value) || p.tempIncrease > Number(tempMax.value)) return false;
-    if (highRiskOnly.checked && p.droughtRisk <= 60) return false;
+    if (!Number.isFinite(droughtRiskValue) || !Number.isFinite(desertificationValue) || !Number.isFinite(tempIncreaseValue)) return false;
+    if (droughtRiskValue < Number(droughtMin.value) || droughtRiskValue > Number(droughtMax.value)) return false;
+    if (desertificationValue < Number(desertMin.value) || desertificationValue > Number(desertMax.value)) return false;
+    if (tempIncreaseValue < Number(tempMin.value) || tempIncreaseValue > Number(tempMax.value)) return false;
+    if (highRiskOnly.checked && droughtRiskValue <= 60) return false;
     return true;
   };
 
   const defaultStyle = (feature) => {
     const metric = metricSelect.value;
-    const value = feature.properties[metric];
+    const rawValue = Number(feature.properties?.[metric]);
+    const value = Number.isFinite(rawValue) ? rawValue : 0;
     const visible = featureVisible(feature);
     return {
       fillColor: colourFor(metric, value),
@@ -706,29 +782,43 @@
   };
 
   const showInfo = (props) => {
-    const drPct = props.droughtRisk;
-    const tmpPct = (props.tempIncrease / 5) * 100;
-    const dsPct = props.desertification;
-    const chips = regionMood(props).map((chip) => `<span class="chip">${chip}</span>`).join('');
+    const drPct = Number(props.droughtRisk);
+    const tmpValue = Number(props.tempIncrease);
+    const tmpPct = (tmpValue / 5) * 100;
+    const dsPct = Number(props.desertification);
+    const chips = regionMood(props).map((chip) => `<span class="chip">${escapeHtml(chip)}</span>`).join('');
+    const confidence = confidenceBadge(props.confidence);
+    const sourceYear = props.sourceYear ?? 'Not specified';
+    const sourceReference = props.sourceReference || 'Not specified';
+    const license = props.license || 'Not specified';
+    const sourceStatus = props.sourceStatus || 'unspecified';
+
     infoPanel.innerHTML = `
-      <h2>${props.name}</h2>
-      <p class="desc">${props.description}</p>
+      <h2>${escapeHtml(props.name)}</h2>
+      <p class="desc">${escapeHtml(props.description || 'No description available.')}</p>
       <div class="chips">${chips}</div>
       <div class="summary">
         <h3>Quick read</h3>
-        <p>${props.name} shows a combined climate-stress profile shaped by drought risk at <strong>${drPct}%</strong>, desertification at <strong>${dsPct}%</strong>, and an estimated temperature increase of <strong>+${props.tempIncrease}°C</strong>.</p>
+        <p>${escapeHtml(props.name)} shows a combined climate-stress profile shaped by drought risk at <strong>${drPct}%</strong>, desertification at <strong>${dsPct}%</strong>, and an estimated temperature increase of <strong>+${tmpValue}°C</strong>.</p>
       </div>
       <div class="stat drought">
         <div class="stat-label"><span>Drought risk</span><span>${drPct}%</span></div>
         <div class="bar-bg"><div class="bar-fill" style="width:${drPct}%"></div></div>
       </div>
       <div class="stat temp">
-        <div class="stat-label"><span>Temperature increase</span><span>+${props.tempIncrease}°C</span></div>
+        <div class="stat-label"><span>Temperature increase</span><span>+${tmpValue}°C</span></div>
         <div class="bar-bg"><div class="bar-fill" style="width:${tmpPct.toFixed(1)}%"></div></div>
       </div>
       <div class="stat desert">
         <div class="stat-label"><span>Desertification</span><span>${dsPct}%</span></div>
         <div class="bar-bg"><div class="bar-fill" style="width:${dsPct}%"></div></div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-row"><span class="meta-key">Confidence</span><span>${confidence}</span></div>
+        <div class="meta-row"><span class="meta-key">Source year</span><span>${escapeHtml(sourceYear)}</span></div>
+        <div class="meta-row"><span class="meta-key">Source status</span><span>${escapeHtml(sourceStatus)}</span></div>
+        <div class="meta-row"><span class="meta-key">Source reference</span><span>${escapeHtml(sourceReference)}</span></div>
+        <div class="meta-row"><span class="meta-key">License</span><span>${escapeHtml(license)}</span></div>
       </div>
       <div class="findings">
         <h3>Climate vulnerability</h3>
@@ -749,6 +839,10 @@
       <div class="summary">
         <h3>Regional overview</h3>
         <p>The Kurdistan Region of Iraq is facing overlapping stress from declining water security, hotter summers, and expanding land degradation. Use the filters to compare where those pressures combine most strongly.</p>
+      </div>
+      <div class="meta-card">
+        <div class="meta-row"><span class="meta-key">Data policy</span><span>Show source, year, method, and license for each metric release.</span></div>
+        <div class="meta-row"><span class="meta-key">Current mode</span><span>Awaiting selection</span></div>
       </div>
       <p class="default-msg">Click on a governorate to open a detailed climate profile.</p>
     `;
@@ -787,12 +881,27 @@
   bindExclusivePanels(filtersPanel, legendPanel);
   bindExclusivePanels(legendPanel, filtersPanel);
 
-  fetch('./governorates.json')
-    .then((r) => r.json())
-    .then((data) => {
+  const loadGeoJson = async () => {
+    for (const candidate of DATA_CANDIDATES) {
+      try {
+        const response = await fetch(candidate, { cache: 'no-store' });
+        if (!response.ok) continue;
+        const data = await response.json();
+        if (data?.type === 'FeatureCollection' && Array.isArray(data.features)) {
+          return { data, sourcePath: candidate };
+        }
+      } catch {
+        // Try next source.
+      }
+    }
+    throw new Error('No readable climate dataset found.');
+  };
+
+  loadGeoJson()
+    .then(({ data, sourcePath }) => {
       allFeatures = data.features;
 
-      const names = allFeatures.map((f) => f.properties.name).sort();
+      const names = allFeatures.map((f) => f.properties?.name).filter(Boolean).sort();
       names.forEach((name) => {
         const opt = document.createElement('option');
         opt.value = name;
@@ -820,12 +929,17 @@
 
           layer.on('click', () => {
             if (!featureVisible(feature)) return;
-            showInfo(feature.properties);
+            showInfo(feature.properties || {});
           });
         }
       }).addTo(map);
 
       statusPill.textContent = `Showing ${allFeatures.length} of ${allFeatures.length} regions`;
+      if (sourcePath.includes('/data/processed/')) {
+        statusPill.textContent += ' | Processed dataset';
+      } else {
+        statusPill.textContent += ' | Legacy fallback dataset';
+      }
       map.fitBounds(geojsonLayer.getBounds().pad(0.1));
     })
     .catch(() => {
