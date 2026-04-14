@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flooding Map - Global Active Archive</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    :root {
+      --bg: #edf2f7;
+      --ink: #0f172a;
+      --card: rgba(255, 255, 255, 0.94);
+      --low: #67a9cf;
+      --mid: #fee08b;
+      --high: #ef8a62;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: radial-gradient(circle at top left, #f8fbff, var(--bg));
+      color: var(--ink);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: absolute;
+      z-index: 1000;
+      background: var(--card);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+      backdrop-filter: blur(4px);
+    }
+
+    .header {
+      top: 14px;
+      left: 14px;
+      padding: 12px 14px;
+      max-width: 380px;
+    }
+
+    .header h1 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+    }
+
+    .header p {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .legend {
+      bottom: 14px;
+      left: 14px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 6px 0;
+    }
+
+    .swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      margin-right: 8px;
+    }
+
+    .stats {
+      top: 14px;
+      right: 14px;
+      padding: 12px 14px;
+      min-width: 220px;
+      font-size: 0.92rem;
+    }
+
+    .stats h2 {
+      margin: 0 0 8px;
+      font-size: 0.98rem;
+    }
+
+    .stats p {
+      margin: 4px 0;
+    }
+
+    @media (max-width: 720px) {
+      .header, .stats {
+        max-width: calc(100vw - 28px);
+      }
+      .stats {
+        top: auto;
+        right: auto;
+        left: 14px;
+        bottom: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="panel header">
+    <h1>Global Flooding Map</h1>
+    <p>Derived from the Global Active Archive of Large Flood Events (DFO). Click points to inspect event details.</p>
+  </div>
+
+  <div class="panel stats" id="stats">
+    <h2>Loading data...</h2>
+  </div>
+
+  <div class="panel legend">
+    <strong>Severity</strong>
+    <div class="legend-item"><span class="swatch" style="background:#67a9cf"></span>Low</div>
+    <div class="legend-item"><span class="swatch" style="background:#fee08b"></span>Medium</div>
+    <div class="legend-item"><span class="swatch" style="background:#ef8a62"></span>High</div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    const map = L.map('map', { minZoom: 2 }).setView([22, 10], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const statsEl = document.getElementById('stats');
+
+    const styleFor = (severity) => {
+      if (!severity || severity <= 1) return { color: '#2166ac', fillColor: '#67a9cf', radius: 3 };
+      if (severity <= 1.8) return { color: '#fdae61', fillColor: '#fee08b', radius: 4 };
+      return { color: '#b2182b', fillColor: '#ef8a62', radius: 5 };
+    };
+
+    fetch('./floodEvents.geojson')
+      .then((response) => response.json())
+      .then((data) => {
+        let totalDead = 0;
+        let totalDisplaced = 0;
+
+        data.features.forEach((feature) => {
+          totalDead += Number(feature.properties.dead || 0);
+          totalDisplaced += Number(feature.properties.displaced || 0);
+        });
+
+        statsEl.innerHTML = `
+          <h2>Flood Archive Snapshot</h2>
+          <p><strong>Events:</strong> ${data.features.length.toLocaleString()}</p>
+          <p><strong>Total deaths:</strong> ${totalDead.toLocaleString()}</p>
+          <p><strong>Total displaced:</strong> ${totalDisplaced.toLocaleString()}</p>
+        `;
+
+        L.geoJSON(data, {
+          pointToLayer: (feature, latlng) => {
+            const style = styleFor(feature.properties.severity);
+            return L.circleMarker(latlng, {
+              radius: style.radius,
+              color: style.color,
+              weight: 1,
+              fillColor: style.fillColor,
+              fillOpacity: 0.75
+            });
+          },
+          onEachFeature: (feature, layer) => {
+            const p = feature.properties;
+            layer.bindPopup(`
+              <strong>${p.country || 'Unknown country'}</strong><br>
+              Cause: ${p.mainCause || 'n/a'}<br>
+              Severity: ${p.severity ?? 'n/a'}<br>
+              Deaths: ${p.dead ?? 'n/a'}<br>
+              Displaced: ${p.displaced ?? 'n/a'}<br>
+              Area: ${p.areaKm2 ?? 'n/a'} km²<br>
+              Began: ${p.began || 'n/a'}<br>
+              Ended: ${p.ended || 'n/a'}
+            `);
+          }
+        }).addTo(map);
+      })
+      .catch((error) => {
+        statsEl.innerHTML = '<h2>Failed to load flood data</h2><p>Please check that floodEvents.geojson is present.</p>';
+        console.error(error);
+      });
+  </script>
+</body>
+</html>
