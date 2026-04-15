@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flood Archive Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    :root {
+      --bg-top: #f4f8ef;
+      --bg-mid: #e4efe1;
+      --ink: #12212b;
+      --muted: #4e5f6c;
+      --panel: #ffffff;
+      --line: #c9d6dc;
+      --accent: #00695c;
+      --accent-soft: #e1f3ee;
+      --danger: #bf360c;
+      --warn: #f57f17;
+      --calm: #2e7d32;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, #fbfff8 0 18%, transparent 19%),
+        radial-gradient(circle at 88% 5%, #f1f7ea 0 20%, transparent 21%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 100%);
+    }
+
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .banner {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(6px);
+      animation: slideIn 320ms ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .top-row {
+      display: grid;
+      grid-template-columns: 1fr minmax(220px, 420px);
+      gap: 14px;
+      align-items: end;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(1.1rem, 2.6vw, 1.9rem);
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      font-size: 0.93rem;
+      color: var(--muted);
+    }
+
+    .search-wrap {
+      display: grid;
+      gap: 6px;
+    }
+
+    .search-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .search-input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 0.96rem;
+      background: #ffffff;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px #d6ece6;
+    }
+
+    .stats {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.83rem;
+      color: #31424d;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(130px, 1fr));
+      gap: 10px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.76);
+      animation: slideIn 400ms ease;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    select,
+    button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 0.9rem;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: inherit;
+    }
+
+    button {
+      border-color: #b8c8cf;
+      background: var(--accent-soft);
+      color: #0d3f38;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(0.98); }
+
+    #map {
+      width: 100%;
+      min-height: 460px;
+      height: calc(100vh - 212px);
+    }
+
+    .legend {
+      background: #fff;
+      border: 1px solid #d4dde1;
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 12px;
+      line-height: 1.35;
+      color: #2e3a43;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      transform: translateY(1px);
+    }
+
+    @media (max-width: 980px) {
+      .top-row {
+        grid-template-columns: 1fr;
+      }
+      .filters {
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+      }
+      #map {
+        height: calc(100vh - 324px);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .filters {
+        grid-template-columns: 1fr;
+      }
+      #map {
+        height: calc(100vh - 515px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <section class="banner">
+      <div class="top-row">
+        <div>
+          <h1 id="headline">Flood Archive Map</h1>
+          <div class="subtitle">Interactive incident map from floodarchive.xlsx with fast search and filter controls.</div>
+        </div>
+        <div class="search-wrap">
+          <label class="search-label" for="searchInput">Search</label>
+          <input id="searchInput" class="search-input" type="search" placeholder="Search by name, district, category, notes" />
+        </div>
+      </div>
+      <div class="stats">
+        <span class="pill" id="totalStat">Total: 0</span>
+        <span class="pill" id="shownStat">Shown: 0</span>
+        <span class="pill" id="catStat">Categories: 0</span>
+        <span class="pill" id="districtStat">Districts: 0</span>
+      </div>
+    </section>
+
+    <section class="filters">
+      <div class="field">
+        <label for="districtFilter">District</label>
+        <select id="districtFilter"><option value="all">All</option></select>
+      </div>
+      <div class="field">
+        <label for="categoryFilter">Category</label>
+        <select id="categoryFilter"><option value="all">All</option></select>
+      </div>
+      <div class="field">
+        <label for="severityFilter">Severity</label>
+        <select id="severityFilter"><option value="all">All</option></select>
+      </div>
+      <div class="field">
+        <label for="statusFilter">Status</label>
+        <select id="statusFilter"><option value="all">All</option></select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button id="resetFilters" type="button">Reset Filters</button>
+      </div>
+    </section>
+
+    <div id="map" aria-label="Flood archive map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    const map = L.map("map", { zoomControl: true });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+
+    const markerLayer = L.layerGroup().addTo(map);
+
+    const state = {
+      allFeatures: [],
+      shownFeatures: [],
+    };
+
+    const severityColor = (severity) => {
+      const s = String(severity || "").toLowerCase();
+      if (s.includes("very high") || s.includes("critical") || s.includes("severe")) return "#bf360c";
+      if (s.includes("high")) return "#f57f17";
+      if (s.includes("medium") || s.includes("moderate")) return "#f9a825";
+      if (s.includes("low")) return "#2e7d32";
+      return "#546e7a";
+    };
+
+    function addLegend() {
+      const legend = L.control({ position: "bottomright" });
+      legend.onAdd = function () {
+        const div = L.DomUtil.create("div", "legend");
+        div.innerHTML = [
+          "<strong>Severity</strong>",
+          '<div><span class="dot" style="background:#bf360c"></span>Very high / critical</div>',
+          '<div><span class="dot" style="background:#f57f17"></span>High</div>',
+          '<div><span class="dot" style="background:#f9a825"></span>Medium</div>',
+          '<div><span class="dot" style="background:#2e7d32"></span>Low</div>',
+          '<div><span class="dot" style="background:#546e7a"></span>Unknown</div>',
+        ].join("");
+        return div;
+      };
+      legend.addTo(map);
+    }
+
+    function uniqueSorted(values) {
+      return [...new Set(values.filter(Boolean).map(String))].sort((a, b) => a.localeCompare(b));
+    }
+
+    function fillSelect(selectEl, values) {
+      const current = selectEl.value || "all";
+      selectEl.innerHTML = '<option value="all">All</option>';
+      values.forEach((v) => {
+        const o = document.createElement("option");
+        o.value = v;
+        o.textContent = v;
+        selectEl.appendChild(o);
+      });
+      if ([...selectEl.options].some((o) => o.value === current)) {
+        selectEl.value = current;
+      }
+    }
+
+    function containsText(feature, text) {
+      if (!text) return true;
+      const p = feature.properties || {};
+      const haystack = [p.name, p.district, p.category, p.description, p.status, p.severity, p.governorate]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(text);
+    }
+
+    function applyFilters() {
+      const search = document.getElementById("searchInput").value.trim().toLowerCase();
+      const district = document.getElementById("districtFilter").value;
+      const category = document.getElementById("categoryFilter").value;
+      const severity = document.getElementById("severityFilter").value;
+      const status = document.getElementById("statusFilter").value;
+
+      state.shownFeatures = state.allFeatures.filter((f) => {
+        const p = f.properties || {};
+        if (!containsText(f, search)) return false;
+        if (district !== "all" && String(p.district || "") !== district) return false;
+        if (category !== "all" && String(p.category || "") !== category) return false;
+        if (severity !== "all" && String(p.severity || "") !== severity) return false;
+        if (status !== "all" && String(p.status || "") !== status) return false;
+        return true;
+      });
+
+      renderMarkers();
+      updateStats();
+    }
+
+    function renderMarkers() {
+      markerLayer.clearLayers();
+      if (!state.shownFeatures.length) return;
+
+      const bounds = [];
+      state.shownFeatures.forEach((feature) => {
+        const coords = feature.geometry && feature.geometry.coordinates;
+        if (!coords || coords.length < 2) return;
+        const lon = Number(coords[0]);
+        const lat = Number(coords[1]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        bounds.push([lat, lon]);
+
+        const p = feature.properties || {};
+        const marker = L.circleMarker([lat, lon], {
+          radius: 6,
+          color: "#21343f",
+          weight: 1,
+          fillColor: severityColor(p.severity),
+          fillOpacity: 0.88,
+        });
+
+        marker.bindPopup(
+          [
+            `<strong>${p.name || "Unnamed location"}</strong>`,
+            `<div>District: ${p.district || "n/a"}</div>`,
+            `<div>Category: ${p.category || "n/a"}</div>`,
+            `<div>Severity: ${p.severity || "n/a"}</div>`,
+            `<div>Status: ${p.status || "n/a"}</div>`,
+            `<div>Date: ${p.event_date || "n/a"}</div>`,
+            p.description ? `<div style="margin-top:4px">${p.description}</div>` : "",
+          ].join(""),
+          { maxWidth: 300 }
+        );
+
+        markerLayer.addLayer(marker);
+      });
+
+      if (bounds.length) {
+        map.fitBounds(bounds, { padding: [30, 30] });
+      }
+    }
+
+    function updateStats() {
+      const total = state.allFeatures.length;
+      const shown = state.shownFeatures.length;
+      const categories = uniqueSorted(state.shownFeatures.map((f) => (f.properties || {}).category));
+      const districts = uniqueSorted(state.shownFeatures.map((f) => (f.properties || {}).district));
+
+      document.getElementById("totalStat").textContent = `Total: ${total.toLocaleString()}`;
+      document.getElementById("shownStat").textContent = `Shown: ${shown.toLocaleString()}`;
+      document.getElementById("catStat").textContent = `Categories: ${categories.length.toLocaleString()}`;
+      document.getElementById("districtStat").textContent = `Districts: ${districts.length.toLocaleString()}`;
+
+      const headline = shown
+        ? `${shown.toLocaleString()} flood archive records match current search and filters`
+        : "No records match your current search and filters";
+      document.getElementById("headline").textContent = headline;
+    }
+
+    function wireControls() {
+      ["searchInput", "districtFilter", "categoryFilter", "severityFilter", "statusFilter"].forEach((id) => {
+        document.getElementById(id).addEventListener("input", applyFilters);
+        document.getElementById(id).addEventListener("change", applyFilters);
+      });
+
+      document.getElementById("resetFilters").addEventListener("click", () => {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("districtFilter").value = "all";
+        document.getElementById("categoryFilter").value = "all";
+        document.getElementById("severityFilter").value = "all";
+        document.getElementById("statusFilter").value = "all";
+        applyFilters();
+      });
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch("./data/floodarchive.geojson", { cache: "no-store" });
+        if (!res.ok) throw new Error(`Could not load GeoJSON: ${res.status}`);
+        const geo = await res.json();
+        state.allFeatures = Array.isArray(geo.features) ? geo.features : [];
+
+        fillSelect(document.getElementById("districtFilter"), uniqueSorted(state.allFeatures.map((f) => (f.properties || {}).district)));
+        fillSelect(document.getElementById("categoryFilter"), uniqueSorted(state.allFeatures.map((f) => (f.properties || {}).category)));
+        fillSelect(document.getElementById("severityFilter"), uniqueSorted(state.allFeatures.map((f) => (f.properties || {}).severity)));
+        fillSelect(document.getElementById("statusFilter"), uniqueSorted(state.allFeatures.map((f) => (f.properties || {}).status)));
+
+        applyFilters();
+      } catch (err) {
+        document.getElementById("headline").textContent = "Data not loaded yet. Run the transformer after adding floodarchive.xlsx.";
+        console.error(err);
+        map.setView([36.19, 44.01], 9);
+      }
+    }
+
+    addLegend();
+    wireControls();
+    loadData();
+  </script>
+</body>
+</html>
