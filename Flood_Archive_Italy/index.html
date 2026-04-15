@@ -190,8 +190,8 @@
 <header class="banner">
   <h1><span class="flag">🇮🇹</span> Flood Events in Italy</h1>
   <div class="subtitle">
-    42 major flood events (1987 – 2021) &middot; 29 968 health facilities &middot;
-    Sources: DFO &amp; Ministero della Salute
+    42 major flood events (1987 – 2021) &middot; 39 181 health facilities &middot;
+    Sources: DFO, Ministero della Salute &amp; OpenStreetMap
   </div>
   <div class="stats">
     <span class="pill" id="shownStat">Shown: 42</span>
@@ -226,8 +226,8 @@
   <div class="field">
     <label for="healthFilter">🏥 Health Sites</label>
     <select id="healthFilter">
-      <option value="all" selected>All (29 968)</option>
-      <option value="risk">⚠ At Risk Only (14)</option>
+      <option value="all" selected>All (39 181)</option>
+      <option value="risk">⚠ At Risk Only (19)</option>
       <option value="hide">Hidden</option>
     </select>
   </div>
@@ -274,7 +274,11 @@ let allFeatures = [], shown = [];
 let healthCluster = null;          // rebuilt on each filter change
 let allHealthData = [];             // [{lon,lat,isRisk,col,popup}]
 const atRiskIds = new Set();        // filled from at-risk GeoJSON
-const HEALTH_COLOR = { Farmacia: "#2e7d32", Parafarmacia: "#00838f" };
+const HEALTH_COLOR = {
+  Farmacia: "#2e7d32", Parafarmacia: "#00838f",
+  Hospital: "#1565c0", Clinic: "#6a1b9a",
+  Doctors: "#ef6c00", Dentist: "#5d4037"
+};
 const AT_RISK_COLOR = "#d32f2f";    // red for at-risk ring
 
 function buildHealthCluster(list) {
@@ -325,6 +329,10 @@ function fillSelect(el, vals) {
       '<b>Health Facilities</b>' +
       '<div><span class="dot" style="background:#2e7d32"></span>Farmacia (19 080)</div>' +
       '<div><span class="dot" style="background:#00838f"></span>Parafarmacia (10 888)</div>' +
+      '<div><span class="dot" style="background:#1565c0"></span>Hospital (2 268)</div>' +
+      '<div><span class="dot" style="background:#6a1b9a"></span>Clinic (1 629)</div>' +
+      '<div><span class="dot" style="background:#ef6c00"></span>Doctors (3 187)</div>' +
+      '<div><span class="dot" style="background:#5d4037"></span>Dentist (2 129)</div>' +
       '<hr style="margin:6px 0;border:0;border-top:1px solid #ddd5ca">' +
       '<b>Flood Risk</b>' +
       '<div><span class="dot" style="background:#d32f2f;border:2px solid #b71c1c"></span>At Risk (&lt; 1 km from flood)</div>';
@@ -453,11 +461,11 @@ document.getElementById("healthFilter").addEventListener("change", applyHealthFi
       const rGeo = await rRes.json();
       (rGeo.features || []).forEach(f => {
         const p = f.properties;
-        atRiskIds.add(p.n + "|" + p.c);  // name + city as unique key
+        atRiskIds.add((p.n + "|" + p.c).toLowerCase());  // name + city as unique key
       });
     }
 
-    /* Health facilities (30 146 points — loaded after floods render) */
+    /* Health facilities (39 181 points — loaded after floods render) */
     const hRes = await fetch("./data/italy_health_facilities.geojson", { cache: "no-store" });
     if (!hRes.ok) throw new Error("Health data: " + hRes.status);
     const hGeo = await hRes.json();
@@ -465,21 +473,21 @@ document.getElementById("healthFilter").addEventListener("change", applyHealthFi
       const [lon, lat] = f.geometry.coordinates;
       if (!isFinite(lat) || !isFinite(lon)) return;
       const p = f.properties;
-      const key = p.n + "|" + p.c;
+      const key = (p.n + "|" + p.c).toLowerCase();
       const isRisk = atRiskIds.has(key);
       const col = isRisk ? AT_RISK_COLOR : (HEALTH_COLOR[p.t] || "#2e7d32");
 
       const riskBadge = isRisk
         ? '<div style="background:#d32f2f;color:#fff;display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600;margin-bottom:6px">⚠ AT RISK — within 1 km of flood</div>'
         : '';
+      const details = p.a
+        ? '<div><b>Address:</b> ' + p.a + '</div><div><b>City:</b> ' + (p.c || '—') + ' (' + (p.p || '') + ')</div><div><b>Region:</b> ' + (p.r || '—') + '</div>'
+        : (p.c ? '<div><b>City:</b> ' + p.c + '</div>' : '');
       const popup =
         '<div style="font-family:Inter,sans-serif;font-size:.88rem;line-height:1.5">' +
           '<strong style="font-size:1rem;color:' + col + '">' + (p.n || '—') + '</strong>' +
           '<div style="color:#666;margin-bottom:4px">' + (p.t || '') + (p.s ? ' — ' + p.s : '') + '</div>' +
-          riskBadge +
-          '<div><b>Address:</b> ' + (p.a || '—') + '</div>' +
-          '<div><b>City:</b> ' + (p.c || '—') + ' (' + (p.p || '') + ')</div>' +
-          '<div><b>Region:</b> ' + (p.r || '—') + '</div>' +
+          riskBadge + details +
         '</div>';
 
       allHealthData.push({ lon, lat, isRisk, col, popup });
