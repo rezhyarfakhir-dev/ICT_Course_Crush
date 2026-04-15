@@ -262,7 +262,7 @@
   <script>
     const map = L.map("map", { zoomControl: true });
     // Always initialize a visible basemap, even before data is loaded.
-    map.setView([36.1911, 44.0092], 9);
+    map.setView([20, 0], 2);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: "&copy; OpenStreetMap contributors",
@@ -404,9 +404,11 @@
       document.getElementById("catStat").textContent = `Categories: ${categories.length.toLocaleString()}`;
       document.getElementById("districtStat").textContent = `Districts: ${districts.length.toLocaleString()}`;
 
-      const headline = shown
-        ? `${shown.toLocaleString()} flood archive records match current search and filters`
-        : "No records match your current search and filters";
+      const headline = total === 0
+        ? "No Flood_Archive data loaded yet. Add floodarchive.xlsx and run the transformer."
+        : (shown
+          ? `${shown.toLocaleString()} flood archive records match current search and filters`
+          : "No records match your current search and filters");
       document.getElementById("headline").textContent = headline;
     }
 
@@ -442,7 +444,7 @@
       } catch (err) {
         document.getElementById("headline").textContent = "Data not loaded yet. Run the transformer after adding floodarchive.xlsx.";
         console.error(err);
-        map.setView([36.19, 44.01], 9);
+        map.setView([20, 0], 2);
       }
     }
 
