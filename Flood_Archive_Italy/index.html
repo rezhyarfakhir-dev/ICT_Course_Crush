@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Italy Flood Events — DFO Archive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    /* ── PALETTE ──────────────────────────────────────────
+       Italy-themed: warm terracotta, olive, cream.
+       The Italian flag's green-white-red inspired the
+       accent colours and the severity scale.            */
+    :root {
+      --cream:  #faf6f0;
+      --olive:  #4a5f3c;
+      --terra:  #c0552e;
+      --ink:    #1e1e1e;
+      --muted:  #6b6b6b;
+      --line:   #ddd5ca;
+      --panel:  #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0 }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--cream);
+    }
+
+    /* ── BANNER ──────────────────────────────────────────
+       A warm cream header with a serif title gives the
+       page an editorial, almost newspaper-like feel —
+       fitting for a historical archive of events.       */
+    .banner {
+      padding: 22px 24px 16px;
+      background: var(--panel);
+      border-bottom: 2px solid var(--terra);
+      animation: fadeDown .4s ease;
+    }
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-8px) }
+      to   { opacity: 1; transform: translateY(0) }
+    }
+    h1 {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      color: var(--terra);
+      letter-spacing: -.01em;
+    }
+    .flag { font-size: 1.15em }
+    .subtitle {
+      margin-top: 6px;
+      font-size: .92rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    /* ── STATS ROW ───────────────────────────────────────
+       Rounded pills use a warm sand background so they
+       feel part of the cream palette rather than cold
+       grey badges.                                      */
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .pill {
+      background: #f0ebe3;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: .82rem;
+      font-weight: 500;
+      color: #3d3a34;
+    }
+
+    /* ── TOOLBAR (search + filters) ──────────────────────
+       Kept on a single row so the user can see the map
+       as large as possible — Italy only has 41 events
+       so fewer filter options are needed.               */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 24px;
+      background: rgba(255,255,255,.8);
+      border-bottom: 1px solid var(--line);
+      align-items: end;
+    }
+    .field { display: grid; gap: 4px; min-width: 120px; flex: 1 }
+    .field label {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .field select, .field input {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: .88rem;
+      font-family: inherit;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--terra);
+    }
+    .btn-reset {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: .88rem;
+      font-family: inherit;
+      font-weight: 600;
+      background: #f0ebe3;
+      color: #5a3e1b;
+      cursor: pointer;
+    }
+    .btn-reset:hover { background: #e7dfd3 }
+
+    /* ── MAP ─────────────────────────────────────────────
+       Takes all remaining vertical space. The CartoDB
+       Positron tile layer is deliberately muted so the
+       coloured markers stand out.                       */
+    #map {
+      width: 100%;
+      height: calc(100vh - 188px);
+      min-height: 380px;
+    }
+
+    /* ── LEGEND ──────────────────────────────────────────
+       Positioned bottom-right, same warm card style.    */
+    .legend {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: .78rem;
+      line-height: 1.6;
+      color: #3d3a34;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    }
+    .legend b { display: block; margin-bottom: 2px }
+    .dot {
+      display: inline-block;
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    @media (max-width: 700px) {
+      .toolbar { flex-direction: column }
+      #map { height: calc(100vh - 340px) }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ BANNER ═══════════════════════════════════════ -->
+<header class="banner">
+  <h1><span class="flag">🇮🇹</span> Flood Events in Italy</h1>
+  <div class="subtitle">
+    41 major flood events (1987 – 2021) &middot; Source: Dartmouth Flood Observatory (DFO)
+  </div>
+  <div class="stats">
+    <span class="pill" id="shownStat">Shown: 41</span>
+    <span class="pill" id="deadStat">Deaths: 479</span>
+    <span class="pill" id="displStat">Displaced: 115,747</span>
+    <span class="pill" id="causeStat">Causes: 7</span>
+  </div>
+</header>
+
+<!-- ═══ TOOLBAR ══════════════════════════════════════ -->
+<div class="toolbar">
+  <div class="field" style="flex:2">
+    <label for="search">Search</label>
+    <input id="search" type="search" placeholder="e.g. torrential, 2018, Sardinia…" />
+  </div>
+  <div class="field">
+    <label for="causeFilter">Cause</label>
+    <select id="causeFilter"><option value="all">All</option></select>
+  </div>
+  <div class="field">
+    <label for="sevFilter">Severity</label>
+    <select id="sevFilter"><option value="all">All</option></select>
+  </div>
+  <div class="field">
+    <label for="yearFilter">Year</label>
+    <select id="yearFilter"><option value="all">All</option></select>
+  </div>
+  <div class="field" style="flex:0">
+    <label>&nbsp;</label>
+    <button class="btn-reset" id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<!-- ═══ MAP ══════════════════════════════════════════ -->
+<div id="map"></div>
+
+<!-- ═══ SCRIPTS ══════════════════════════════════════ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+/* ── Colour choices ──────────────────────────────────
+   Very High → deep red (#b71c1c)   — danger / urgency
+   High      → burnt orange (#e65100) — strong warning
+   Medium    → golden (#f9a825)      — moderate alert
+   These three map visually to a traffic-light idea
+   (red → orange → yellow) that readers understand
+   instantly without a legend.                         */
+const SEV_COLOR = {
+  "Very High": "#b71c1c",
+  "High":      "#e65100",
+  "Medium":    "#f9a825"
+};
+const sevColor = s => SEV_COLOR[s] || "#78909c";
+
+/* ── Map setup ───────────────────────────────────────
+   CartoDB Positron: a very light, low-contrast basemap
+   chosen so coloured markers pop without competing
+   with busy terrain imagery. Italy is centred at
+   ~42.5°N 12.5°E with zoom 6 to show the whole boot. */
+const map = L.map("map").setView([42.5, 12.5], 6);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+  maxZoom: 18,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+}).addTo(map);
+
+const markers = L.layerGroup().addTo(map);
+let allFeatures = [], shown = [];
+
+/* ── Helpers ─────────────────────────────────────── */
+const uniq = arr => [...new Set(arr.filter(Boolean))].sort();
+const fmt  = n  => n != null ? Number(n).toLocaleString() : "—";
+
+function fillSelect(el, vals) {
+  const cur = el.value;
+  el.innerHTML = '<option value="all">All</option>';
+  vals.forEach(v => { const o = document.createElement("option"); o.value = v; o.textContent = v; el.appendChild(o) });
+  if ([...el.options].some(o => o.value === cur)) el.value = cur;
+}
+
+/* ── Legend ───────────────────────────────────────── */
+(function () {
+  const lg = L.control({ position: "bottomright" });
+  lg.onAdd = function () {
+    const d = L.DomUtil.create("div", "legend");
+    d.innerHTML =
+      '<b>Severity</b>' +
+      '<div><span class="dot" style="background:#b71c1c"></span>Very High (\u2265 2.0)</div>' +
+      '<div><span class="dot" style="background:#e65100"></span>High (1.5 – 2.0)</div>' +
+      '<div><span class="dot" style="background:#f9a825"></span>Medium (1.0 – 1.5)</div>';
+    return d;
+  };
+  lg.addTo(map);
+})();
+
+/* ── Filter + render ─────────────────────────────── */
+function applyFilters() {
+  const q   = document.getElementById("search").value.trim().toLowerCase();
+  const cau = document.getElementById("causeFilter").value;
+  const sev = document.getElementById("sevFilter").value;
+  const yr  = document.getElementById("yearFilter").value;
+
+  shown = allFeatures.filter(f => {
+    const p = f.properties;
+    if (q && ![p.cause, p.severity, p.validation, p.began, p.ended].filter(Boolean).join(" ").toLowerCase().includes(q)) return false;
+    if (cau !== "all" && p.cause !== cau) return false;
+    if (sev !== "all" && p.severity !== sev) return false;
+    if (yr  !== "all" && p.began.slice(0, 4) !== yr) return false;
+    return true;
+  });
+  render();
+  updateStats();
+}
+
+function render() {
+  markers.clearLayers();
+  const bounds = [];
+  shown.forEach(f => {
+    const [lon, lat] = f.geometry.coordinates;
+    if (!isFinite(lat) || !isFinite(lon)) return;
+    bounds.push([lat, lon]);
+    const p = f.properties;
+
+    /* ── Marker size ─────────────────────────────────
+       Radius scales with severity_raw (1→5px, 2→9px).
+       Larger = more severe — a natural visual metaphor.
+       A thin dark stroke separates overlapping dots.   */
+    const r = Math.max(5, Math.min(12, p.severity_raw * 4.5));
+
+    const m = L.circleMarker([lat, lon], {
+      radius: r,
+      color: "#2c2c2c",
+      weight: 1,
+      fillColor: sevColor(p.severity),
+      fillOpacity: 0.85
+    });
+
+    /* ── Popup ───────────────────────────────────────
+       Clean two-section layout: header with date range,
+       then a detail grid. Monochrome text keeps focus
+       on the data rather than decoration.              */
+    m.bindPopup(
+      '<div style="font-family:Inter,sans-serif;font-size:.88rem;line-height:1.5">' +
+        '<strong style="font-size:1rem;color:#c0552e">' + p.began + ' → ' + p.ended + '</strong>' +
+        '<div style="color:#666;margin-bottom:6px">' + fmt(p.duration_days) + ' days</div>' +
+        '<div><b>Cause:</b> ' + (p.cause || '—') + '</div>' +
+        '<div><b>Severity:</b> ' + p.severity + ' (' + p.severity_raw + ')</div>' +
+        '<div><b>Deaths:</b> ' + fmt(p.dead) + ' · <b>Displaced:</b> ' + fmt(p.displaced) + '</div>' +
+        '<div><b>Affected area:</b> ' + fmt(p.affected_sqkm) + ' km²</div>' +
+        '<div style="margin-top:4px;font-size:.8rem;color:#999">Source: ' + (p.validation || '—') + '</div>' +
+      '</div>',
+      { maxWidth: 300 }
+    );
+    markers.addLayer(m);
+  });
+
+  if (bounds.length) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
+}
+
+function updateStats() {
+  const dead = shown.reduce((s, f) => s + (f.properties.dead || 0), 0);
+  const disp = shown.reduce((s, f) => s + (f.properties.displaced || 0), 0);
+  const caus = uniq(shown.map(f => f.properties.cause));
+  document.getElementById("shownStat").textContent  = "Shown: " + shown.length;
+  document.getElementById("deadStat").textContent    = "Deaths: " + dead.toLocaleString();
+  document.getElementById("displStat").textContent   = "Displaced: " + disp.toLocaleString();
+  document.getElementById("causeStat").textContent   = "Causes: " + caus.length;
+}
+
+/* ── Event listeners ─────────────────────────────── */
+["search", "causeFilter", "sevFilter", "yearFilter"].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener("input", applyFilters);
+  el.addEventListener("change", applyFilters);
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  document.getElementById("search").value = "";
+  ["causeFilter", "sevFilter", "yearFilter"].forEach(id => document.getElementById(id).value = "all");
+  applyFilters();
+});
+
+/* ── Load data ───────────────────────────────────── */
+(async function () {
+  try {
+    const res = await fetch("./data/italy_floods.geojson", { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    const geo = await res.json();
+    allFeatures = geo.features || [];
+
+    fillSelect(document.getElementById("causeFilter"), uniq(allFeatures.map(f => f.properties.cause)));
+    fillSelect(document.getElementById("sevFilter"),   uniq(allFeatures.map(f => f.properties.severity)));
+    fillSelect(document.getElementById("yearFilter"),  uniq(allFeatures.map(f => f.properties.began.slice(0, 4))));
+    applyFilters();
+  } catch (e) {
+    console.error(e);
+    document.querySelector("h1").textContent = "Could not load Italy flood data.";
+  }
+})();
+</script>
+</body>
+</html>
