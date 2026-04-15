@@ -272,8 +272,8 @@ let allFeatures = [], shown = [];
    Uses MarkerCluster to keep 30 000+ pharmacies usable.
    Green circle for Farmacia, teal for Parafarmacia.   */
 let healthCluster = null;          // built after data loads
-let atRiskCluster = null;           // separate group for 14 at-risk sites
-let allHealthMarkers = [];          // [{marker, isAtRisk}]
+let allHealthMarkers = [];          // all health circleMarkers
+let atRiskMarkers = [];             // only the 14 at-risk ones
 const atRiskIds = new Set();        // filled from at-risk GeoJSON
 const HEALTH_COLOR = { Farmacia: "#2e7d32", Parafarmacia: "#00838f" };
 const AT_RISK_COLOR = "#d32f2f";    // red for at-risk ring
@@ -400,15 +400,14 @@ document.getElementById("resetBtn").addEventListener("click", () => {
 /* ── Health filter ────────────────────────────────── */
 function applyHealthFilter() {
   const mode = document.getElementById("healthFilter").value;
+  if (!healthCluster) return;
+  healthCluster.clearLayers();
   if (mode === "hide") {
     map.removeLayer(healthCluster);
-    map.removeLayer(atRiskCluster);
-  } else if (mode === "risk") {
-    map.removeLayer(healthCluster);
-    if (!map.hasLayer(atRiskCluster)) map.addLayer(atRiskCluster);
   } else {
+    const list = mode === "risk" ? atRiskMarkers : allHealthMarkers;
+    list.forEach(m => healthCluster.addLayer(m));
     if (!map.hasLayer(healthCluster)) map.addLayer(healthCluster);
-    map.removeLayer(atRiskCluster);
   }
 }
 document.getElementById("healthFilter").addEventListener("change", applyHealthFilter);
@@ -444,7 +443,6 @@ document.getElementById("healthFilter").addEventListener("change", applyHealthFi
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false
     });
-    atRiskCluster = L.layerGroup();
 
     const hRes = await fetch("./data/italy_health_facilities.geojson", { cache: "no-store" });
     if (!hRes.ok) throw new Error("Health data: " + hRes.status);
@@ -480,18 +478,13 @@ document.getElementById("healthFilter").addEventListener("change", applyHealthFi
         { maxWidth: 280 }
       );
 
-      healthCluster.addLayer(m);
-      if (isRisk) atRiskCluster.addLayer(
-        L.circleMarker([lat, lon], {
-          radius: 8, color: "#b71c1c", weight: 3,
-          fillColor: AT_RISK_COLOR, fillOpacity: 0.9
-        }).bindPopup(m.getPopup())
-      );
+      allHealthMarkers.push(m);
+      if (isRisk) atRiskMarkers.push(m);
     });
 
     /* Show all by default */
+    allHealthMarkers.forEach(m => healthCluster.addLayer(m));
     map.addLayer(healthCluster);
-    applyHealthFilter();
   } catch (e) {
     console.error(e);
     document.querySelector("h1").textContent = "Could not load data.";
