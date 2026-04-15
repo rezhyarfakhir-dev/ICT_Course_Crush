@@ -43,11 +43,11 @@
     <div class="top-row">
       <div>
         <h1 id="headline">Global Active Archive of Large Flood Events</h1>
-        <div class="subtitle">4,029 flood events worldwide &middot; Dartmouth Flood Observatory (DFO) &middot; Search, filter, and explore.</div>
+        <div class="subtitle">5,130 flood events worldwide (1985–2021) &middot; Dartmouth Flood Observatory (DFO) &middot; Search, filter, and explore.</div>
       </div>
       <div class="search-wrap">
         <label class="search-label" for="searchInput">Search</label>
-        <input id="searchInput" class="search-input" type="search" placeholder="Search by country, location, cause, river..." />
+        <input id="searchInput" class="search-input" type="search" placeholder="Search by country, cause, validation source..." />
       </div>
     </div>
     <div class="stats">
@@ -79,7 +79,7 @@ function fillSelect(el,v){const c=el.value||"all";el.innerHTML='<option value="a
 function fmt(n){return n!=null?Number(n).toLocaleString():"n/a"}
 (function(){const lg=L.control({position:"bottomright"});lg.onAdd=function(){const d=L.DomUtil.create("div","legend");d.innerHTML='<strong>Severity</strong><div><span class="dot" style="background:#bf360c"></span>Very high (\u2265 2)</div><div><span class="dot" style="background:#f57f17"></span>High (1.5\u20132)</div><div><span class="dot" style="background:#f9a825"></span>Medium (1\u20131.5)</div><div><span class="dot" style="background:#2e7d32"></span>Low (&lt; 1)</div>';return d};lg.addTo(map)})();
 
-function matchesSearch(f,t){if(!t)return true;const p=f.properties||{};return[p.country,p.other_countries,p.location,p.rivers,p.cause,p.severity].filter(Boolean).join(" ").toLowerCase().includes(t)}
+function matchesSearch(f,t){if(!t)return true;const p=f.properties||{};return[p.country,p.other_country,p.cause,p.severity,p.validation,p.glide_number].filter(Boolean).join(" ").toLowerCase().includes(t)}
 function applyFilters(){
   const search=document.getElementById("searchInput").value.trim().toLowerCase();
   const country=document.getElementById("countryFilter").value;
@@ -106,8 +106,8 @@ function renderMarkers(){
     const lon=+c[0],lat=+c[1];if(!isFinite(lat)||!isFinite(lon))return;
     bounds.push([lat,lon]);
     const p=f.properties||{};
-    const m=L.circleMarker([lat,lon],{radius:Math.max(4,Math.min(10,(p.magnitude||3)*1.2)),color:"#21343f",weight:1,fillColor:severityColor(p.severity),fillOpacity:.85});
-    m.bindPopup('<strong>'+( p.country||"Unknown")+'</strong>'+(p.other_countries?'<div>Also: '+p.other_countries+'</div>':'')+'<div>'+(p.location||'')+'</div>'+(p.rivers?'<div>Rivers: '+p.rivers+'</div>':'')+'<hr style="margin:4px 0;border:none;border-top:1px solid #ddd">'+'<div>Cause: '+(p.cause||'n/a')+'</div>'+'<div>Severity: '+(p.severity||'n/a')+' &middot; Magnitude: '+fmt(p.magnitude)+'</div>'+'<div>Dead: '+fmt(p.dead)+' &middot; Displaced: '+fmt(p.displaced)+'</div>'+'<div>Damage: $'+fmt(p.damage_usd)+'</div>'+'<div>Duration: '+fmt(p.duration_days)+' days &middot; Area: '+fmt(p.affected_sqkm)+' km\u00B2</div>'+'<div>'+(p.began||'?')+' \u2192 '+(p.ended||'?')+'</div>',{maxWidth:320});
+    const m=L.circleMarker([lat,lon],{radius:Math.max(4,Math.min(10,(p.severity_raw||1)*4)),color:"#21343f",weight:1,fillColor:severityColor(p.severity),fillOpacity:.85});
+    m.bindPopup('<strong>'+( p.country||"Unknown")+'</strong>'+(p.other_country?'<div>Also: '+p.other_country+'</div>':'')+'<hr style="margin:4px 0;border:none;border-top:1px solid #ddd">'+'<div>Cause: '+(p.cause||'n/a')+'</div>'+'<div>Severity: '+(p.severity||'n/a')+' ('+fmt(p.severity_raw)+')</div>'+'<div>Dead: '+fmt(p.dead)+' &middot; Displaced: '+fmt(p.displaced)+'</div>'+'<div>Area: '+fmt(p.affected_sqkm)+' km\u00B2</div>'+'<div>Duration: '+fmt(p.duration_days)+' days</div>'+'<div>'+(p.began||'?')+' \u2192 '+(p.ended||'?')+'</div>'+'<div style="margin-top:4px;font-size:.85em;color:#666">Source: '+(p.validation||'n/a')+(p.glide_number?' &middot; GLIDE: '+p.glide_number:'')+'</div>',{maxWidth:320});
     markerLayer.addLayer(m);
   });
   if(bounds.length)map.fitBounds(bounds,{padding:[30,30],maxZoom:6});
