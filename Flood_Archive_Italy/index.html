@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <style>
     /* ── PALETTE ──────────────────────────────────────────
        Italy-themed: warm terracotta, olive, cream.
@@ -156,6 +158,38 @@
       vertical-align: middle;
     }
 
+    /* ── HEALTH TOGGLE ────────────────────────────────
+       A compact toggle sitting in the toolbar lets the
+       user show / hide the 30 000+ pharmacy markers
+       without cluttering the main filter row.          */
+    .health-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      font-size: .82rem;
+      font-weight: 500;
+      color: #3d3a34;
+      white-space: nowrap;
+    }
+    .health-toggle input[type=checkbox] {
+      width: 16px; height: 16px;
+      accent-color: var(--olive);
+      cursor: pointer;
+    }
+    .health-toggle label { cursor: pointer }
+
+    /* cluster overrides — green for pharmacies */
+    .marker-cluster-small  { background-color: rgba(74,95,60,.45) }
+    .marker-cluster-medium { background-color: rgba(74,95,60,.55) }
+    .marker-cluster-large  { background-color: rgba(74,95,60,.65) }
+    .marker-cluster-small div,
+    .marker-cluster-medium div,
+    .marker-cluster-large div {
+      background-color: rgba(74,95,60,.8);
+      color: #fff;
+    }
+
     @media (max-width: 700px) {
       .toolbar { flex-direction: column }
       #map { height: calc(100vh - 340px) }
@@ -168,7 +202,8 @@
 <header class="banner">
   <h1><span class="flag">🇮🇹</span> Flood Events in Italy</h1>
   <div class="subtitle">
-    41 major flood events (1987 – 2021) &middot; Source: Dartmouth Flood Observatory (DFO)
+    41 major flood events (1987 – 2021) &middot; 30 146 health facilities &middot;
+    Sources: DFO &amp; Ministero della Salute
   </div>
   <div class="stats">
     <span class="pill" id="shownStat">Shown: 41</span>
@@ -200,6 +235,10 @@
     <label>&nbsp;</label>
     <button class="btn-reset" id="resetBtn">Reset</button>
   </div>
+  <div class="health-toggle">
+    <input type="checkbox" id="healthToggle" checked />
+    <label for="healthToggle">🏥 Health Facilities (30 146)</label>
+  </div>
 </div>
 
 <!-- ═══ MAP ══════════════════════════════════════════ -->
@@ -207,6 +246,7 @@
 
 <!-- ═══ SCRIPTS ══════════════════════════════════════ -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 /* ── Colour choices ──────────────────────────────────
    Very High → deep red (#b71c1c)   — danger / urgency
@@ -236,6 +276,17 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
 const markers = L.layerGroup().addTo(map);
 let allFeatures = [], shown = [];
 
+/* ── Health facilities layer ─────────────────────────
+   Uses MarkerCluster to keep 30 000+ pharmacies usable.
+   Green circle for Farmacia, teal for Parafarmacia.   */
+const healthCluster = L.markerClusterGroup({
+  maxClusterRadius: 50,
+  disableClusteringAtZoom: 14,
+  spiderfyOnMaxZoom: true,
+  showCoverageOnHover: false
+}).addTo(map);
+const HEALTH_COLOR = { Farmacia: "#2e7d32", Parafarmacia: "#00838f" };
+
 /* ── Helpers ─────────────────────────────────────── */
 const uniq = arr => [...new Set(arr.filter(Boolean))].sort();
 const fmt  = n  => n != null ? Number(n).toLocaleString() : "—";
@@ -253,10 +304,14 @@ function fillSelect(el, vals) {
   lg.onAdd = function () {
     const d = L.DomUtil.create("div", "legend");
     d.innerHTML =
-      '<b>Severity</b>' +
+      '<b>Flood Severity</b>' +
       '<div><span class="dot" style="background:#b71c1c"></span>Very High (\u2265 2.0)</div>' +
       '<div><span class="dot" style="background:#e65100"></span>High (1.5 – 2.0)</div>' +
-      '<div><span class="dot" style="background:#f9a825"></span>Medium (1.0 – 1.5)</div>';
+      '<div><span class="dot" style="background:#f9a825"></span>Medium (1.0 – 1.5)</div>' +
+      '<hr style="margin:6px 0;border:0;border-top:1px solid #ddd5ca">' +
+      '<b>Health Facilities</b>' +
+      '<div><span class="dot" style="background:#2e7d32"></span>Farmacia (19 080)</div>' +
+      '<div><span class="dot" style="background:#00838f"></span>Parafarmacia (11 066)</div>';
     return d;
   };
   lg.addTo(map);
@@ -348,9 +403,16 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   applyFilters();
 });
 
+/* ── Health toggle ────────────────────────────────── */
+document.getElementById("healthToggle").addEventListener("change", function () {
+  if (this.checked) map.addLayer(healthCluster);
+  else map.removeLayer(healthCluster);
+});
+
 /* ── Load data ───────────────────────────────────── */
 (async function () {
   try {
+    /* Flood data */
     const res = await fetch("./data/italy_floods.geojson", { cache: "no-store" });
     if (!res.ok) throw new Error(res.status);
     const geo = await res.json();
@@ -360,9 +422,38 @@ document.getElementById("resetBtn").addEventListener("click", () => {
     fillSelect(document.getElementById("sevFilter"),   uniq(allFeatures.map(f => f.properties.severity)));
     fillSelect(document.getElementById("yearFilter"),  uniq(allFeatures.map(f => f.properties.began.slice(0, 4))));
     applyFilters();
+
+    /* Health facilities (30 146 points — loaded after floods render) */
+    const hRes = await fetch("./data/italy_health_facilities.geojson", { cache: "no-store" });
+    if (!hRes.ok) throw new Error("Health data: " + hRes.status);
+    const hGeo = await hRes.json();
+    (hGeo.features || []).forEach(f => {
+      const [lon, lat] = f.geometry.coordinates;
+      if (!isFinite(lat) || !isFinite(lon)) return;
+      const p = f.properties;
+      const col = HEALTH_COLOR[p.t] || "#2e7d32";
+      const m = L.circleMarker([lat, lon], {
+        radius: 5,
+        color: col,
+        weight: 1,
+        fillColor: col,
+        fillOpacity: 0.7
+      });
+      m.bindPopup(
+        '<div style="font-family:Inter,sans-serif;font-size:.88rem;line-height:1.5">' +
+          '<strong style="font-size:1rem;color:' + col + '">' + (p.n || '—') + '</strong>' +
+          '<div style="color:#666;margin-bottom:6px">' + (p.t || '') + (p.s ? ' — ' + p.s : '') + '</div>' +
+          '<div><b>Address:</b> ' + (p.a || '—') + '</div>' +
+          '<div><b>City:</b> ' + (p.c || '—') + ' (' + (p.p || '') + ')</div>' +
+          '<div><b>Region:</b> ' + (p.r || '—') + '</div>' +
+        '</div>',
+        { maxWidth: 280 }
+      );
+      healthCluster.addLayer(m);
+    });
   } catch (e) {
     console.error(e);
-    document.querySelector("h1").textContent = "Could not load Italy flood data.";
+    document.querySelector("h1").textContent = "Could not load data.";
   }
 })();
 </script>

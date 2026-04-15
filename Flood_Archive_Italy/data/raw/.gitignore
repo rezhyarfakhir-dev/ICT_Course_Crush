@@ -1,0 +1,3 @@
+# Raw Ministry of Health downloads — too large for git
+*.json
+*.csv
