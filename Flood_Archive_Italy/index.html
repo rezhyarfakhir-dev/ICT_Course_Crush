@@ -271,12 +271,34 @@ let allFeatures = [], shown = [];
 /* ── Health facilities layer ─────────────────────────
    Uses MarkerCluster to keep 30 000+ pharmacies usable.
    Green circle for Farmacia, teal for Parafarmacia.   */
-let healthCluster = null;          // built after data loads
-let allHealthMarkers = [];          // all health circleMarkers
-let atRiskMarkers = [];             // only the 14 at-risk ones
+let healthCluster = null;          // rebuilt on each filter change
+let allHealthData = [];             // [{lon,lat,isRisk,col,popup}]
 const atRiskIds = new Set();        // filled from at-risk GeoJSON
 const HEALTH_COLOR = { Farmacia: "#2e7d32", Parafarmacia: "#00838f" };
 const AT_RISK_COLOR = "#d32f2f";    // red for at-risk ring
+
+function buildHealthCluster(list) {
+  if (healthCluster) map.removeLayer(healthCluster);
+  healthCluster = L.markerClusterGroup({
+    maxClusterRadius: 50,
+    disableClusteringAtZoom: 14,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false
+  });
+  const arr = [];
+  list.forEach(d => {
+    const m = L.circleMarker([d.lat, d.lon], {
+      radius: d.isRisk ? 8 : 5,
+      color:  d.isRisk ? "#b71c1c" : d.col,
+      weight: d.isRisk ? 3 : 1,
+      fillColor: d.col,
+      fillOpacity: d.isRisk ? 0.9 : 0.7
+    }).bindPopup(d.popup, { maxWidth: 280 });
+    arr.push(m);
+  });
+  healthCluster.addLayers(arr);
+  map.addLayer(healthCluster);
+}
 
 /* ── Helpers ─────────────────────────────────────── */
 const uniq = arr => [...new Set(arr.filter(Boolean))].sort();
@@ -400,14 +422,13 @@ document.getElementById("resetBtn").addEventListener("click", () => {
 /* ── Health filter ────────────────────────────────── */
 function applyHealthFilter() {
   const mode = document.getElementById("healthFilter").value;
-  if (!healthCluster) return;
-  healthCluster.clearLayers();
   if (mode === "hide") {
-    map.removeLayer(healthCluster);
+    if (healthCluster) { map.removeLayer(healthCluster); healthCluster = null; }
   } else {
-    const list = mode === "risk" ? atRiskMarkers : allHealthMarkers;
-    list.forEach(m => healthCluster.addLayer(m));
-    if (!map.hasLayer(healthCluster)) map.addLayer(healthCluster);
+    const list = mode === "risk"
+      ? allHealthData.filter(d => d.isRisk)
+      : allHealthData;
+    buildHealthCluster(list);
   }
 }
 document.getElementById("healthFilter").addEventListener("change", applyHealthFilter);
@@ -437,13 +458,6 @@ document.getElementById("healthFilter").addEventListener("change", applyHealthFi
     }
 
     /* Health facilities (30 146 points — loaded after floods render) */
-    healthCluster = L.markerClusterGroup({
-      maxClusterRadius: 50,
-      disableClusteringAtZoom: 14,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false
-    });
-
     const hRes = await fetch("./data/italy_health_facilities.geojson", { cache: "no-store" });
     if (!hRes.ok) throw new Error("Health data: " + hRes.status);
     const hGeo = await hRes.json();
@@ -455,18 +469,10 @@ document.getElementById("healthFilter").addEventListener("change", applyHealthFi
       const isRisk = atRiskIds.has(key);
       const col = isRisk ? AT_RISK_COLOR : (HEALTH_COLOR[p.t] || "#2e7d32");
 
-      const m = L.circleMarker([lat, lon], {
-        radius: isRisk ? 8 : 5,
-        color:  isRisk ? "#b71c1c" : col,
-        weight: isRisk ? 3 : 1,
-        fillColor: col,
-        fillOpacity: isRisk ? 0.9 : 0.7
-      });
-
       const riskBadge = isRisk
         ? '<div style="background:#d32f2f;color:#fff;display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600;margin-bottom:6px">⚠ AT RISK — within 1 km of flood</div>'
         : '';
-      m.bindPopup(
+      const popup =
         '<div style="font-family:Inter,sans-serif;font-size:.88rem;line-height:1.5">' +
           '<strong style="font-size:1rem;color:' + col + '">' + (p.n || '—') + '</strong>' +
           '<div style="color:#666;margin-bottom:4px">' + (p.t || '') + (p.s ? ' — ' + p.s : '') + '</div>' +
@@ -474,17 +480,13 @@ document.getElementById("healthFilter").addEventListener("change", applyHealthFi
           '<div><b>Address:</b> ' + (p.a || '—') + '</div>' +
           '<div><b>City:</b> ' + (p.c || '—') + ' (' + (p.p || '') + ')</div>' +
           '<div><b>Region:</b> ' + (p.r || '—') + '</div>' +
-        '</div>',
-        { maxWidth: 280 }
-      );
+        '</div>';
 
-      allHealthMarkers.push(m);
-      if (isRisk) atRiskMarkers.push(m);
+      allHealthData.push({ lon, lat, isRisk, col, popup });
     });
 
     /* Show all by default */
-    allHealthMarkers.forEach(m => healthCluster.addLayer(m));
-    map.addLayer(healthCluster);
+    buildHealthCluster(allHealthData);
   } catch (e) {
     console.error(e);
     document.querySelector("h1").textContent = "Could not load data.";
