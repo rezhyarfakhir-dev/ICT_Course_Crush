@@ -1,0 +1,52 @@
+{
+  "source_urls": {
+    "healthsites_csv": "https://data.humdata.org/dataset/2d76464e-cbf4-4130-a6d9-182e73310c64/resource/009b4c64-ecc0-44fd-aa5d-d6a2d46c4823/download/iraq.csv",
+    "cod_adm_geojson_zip": "https://data.humdata.org/dataset/488bb3cd-3ce9-49d3-862a-3ce7975c63e1/resource/a9ed4d00-1182-4fdc-a0e4-82bbd20786db/download/irq_admin_boundaries.geojson.zip",
+    "risk_flood_exposure_csv": "https://hot.storage.heigit.org/heigit-hdx-public/risk_assessment_inputs/irq/IRQ_ADM2_flood_exposure.csv",
+    "risk_demographics_csv": "https://hot.storage.heigit.org/heigit-hdx-public/risk_assessment_inputs/irq/IRQ_ADM2_demographics.csv",
+    "risk_rural_csv": "https://hot.storage.heigit.org/heigit-hdx-public/risk_assessment_inputs/irq/IRQ_ADM2_rural_population.csv"
+  },
+  "outputs": {
+    "erbil_health_facilities.csv": {
+      "rows": 1134,
+      "valid_coordinate_rows": 1134,
+      "type_counts": {
+        "pharmacy": 450,
+        "clinic": 258,
+        "hospital": 218,
+        "doctors": 125,
+        "dentist": 57,
+        "laboratory": 19,
+        "physiotherapist": 2,
+        "rehabilitation": 2,
+        "optometrist": 1,
+        "alternative": 1,
+        "blood_donation": 1
+      }
+    },
+    "erbil_districts.geojson": {
+      "district_count": 6,
+      "district_names": [
+        "Al-Zibar",
+        "Erbil",
+        "Koysinjaq",
+        "Makhmour",
+        "Rawanduz",
+        "Shaqlawa"
+      ],
+      "rows_with_missing_population_fields": 0
+    },
+    "erbil_flood_zones.geojson": {
+      "zone_count": 6,
+      "risk_level_counts": {
+        "low": 2,
+        "medium": 2,
+        "high": 2
+      }
+    },
+    "december_2021_flood.geojson": {
+      "feature_count": 3,
+      "note": "Fallback proxy points, not observed event footprint polygons."
+    }
+  }
+}

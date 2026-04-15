@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"name": "december_2021_flood",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "district_name": "Koysinjaq", "event_date": "2021-12", "risk_level": "high", "risk_score": 89821, "flooded_area_km2": null, "source_url": "https://hot.storage.heigit.org/heigit-hdx-public/risk_assessment_inputs/irq/IRQ_ADM2_flood_exposure.csv", "confidence": "low", "method_note": "No open Dec-2021 event footprint vector found from queried public endpoints; centroid proxy from district flood exposure indicators." }, "geometry": { "type": "Point", "coordinates": [ 44.524480557607049, 36.028822745077271 ] } },
+{ "type": "Feature", "properties": { "district_name": "Rawanduz", "event_date": "2021-12", "risk_level": "high", "risk_score": 27573, "flooded_area_km2": null, "source_url": "https://hot.storage.heigit.org/heigit-hdx-public/risk_assessment_inputs/irq/IRQ_ADM2_flood_exposure.csv", "confidence": "low", "method_note": "No open Dec-2021 event footprint vector found from queried public endpoints; centroid proxy from district flood exposure indicators." }, "geometry": { "type": "Point", "coordinates": [ 44.629496440686125, 36.775746585504869 ] } },
+{ "type": "Feature", "properties": { "district_name": "Makhmour", "event_date": "2021-12", "risk_level": "medium", "risk_score": 4674, "flooded_area_km2": null, "source_url": "https://hot.storage.heigit.org/heigit-hdx-public/risk_assessment_inputs/irq/IRQ_ADM2_flood_exposure.csv", "confidence": "low", "method_note": "No open Dec-2021 event footprint vector found from queried public endpoints; centroid proxy from district flood exposure indicators." }, "geometry": { "type": "Point", "coordinates": [ 43.615675250923211, 35.802876678775661 ] } }
+]
+}
