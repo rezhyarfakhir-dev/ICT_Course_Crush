@@ -158,26 +158,14 @@
       vertical-align: middle;
     }
 
-    /* ── HEALTH TOGGLE ────────────────────────────────
-       A compact toggle sitting in the toolbar lets the
-       user show / hide the 30 000+ pharmacy markers
-       without cluttering the main filter row.          */
-    .health-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 0;
-      font-size: .82rem;
-      font-weight: 500;
-      color: #3d3a34;
-      white-space: nowrap;
+    /* ── AT-RISK PULSE ────────────────────────────────
+       A pulsing red ring draws attention to the 14
+       pharmacies sitting within 1 km of a flood event. */
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(211,47,47,.55) }
+      70%  { box-shadow: 0 0 0 8px rgba(211,47,47,0) }
+      100% { box-shadow: 0 0 0 0 rgba(211,47,47,0) }
     }
-    .health-toggle input[type=checkbox] {
-      width: 16px; height: 16px;
-      accent-color: var(--olive);
-      cursor: pointer;
-    }
-    .health-toggle label { cursor: pointer }
 
     /* cluster overrides — green for pharmacies */
     .marker-cluster-small  { background-color: rgba(74,95,60,.45) }
@@ -235,9 +223,13 @@
     <label>&nbsp;</label>
     <button class="btn-reset" id="resetBtn">Reset</button>
   </div>
-  <div class="health-toggle">
-    <input type="checkbox" id="healthToggle" checked />
-    <label for="healthToggle">🏥 Health Facilities (30 146)</label>
+  <div class="field">
+    <label for="healthFilter">🏥 Health Sites</label>
+    <select id="healthFilter">
+      <option value="all" selected>All (30 146)</option>
+      <option value="risk">⚠ At Risk Only (14)</option>
+      <option value="hide">Hidden</option>
+    </select>
   </div>
 </div>
 
@@ -279,13 +271,12 @@ let allFeatures = [], shown = [];
 /* ── Health facilities layer ─────────────────────────
    Uses MarkerCluster to keep 30 000+ pharmacies usable.
    Green circle for Farmacia, teal for Parafarmacia.   */
-const healthCluster = L.markerClusterGroup({
-  maxClusterRadius: 50,
-  disableClusteringAtZoom: 14,
-  spiderfyOnMaxZoom: true,
-  showCoverageOnHover: false
-}).addTo(map);
+let healthCluster = null;          // built after data loads
+let atRiskCluster = null;           // separate group for 14 at-risk sites
+let allHealthMarkers = [];          // [{marker, isAtRisk}]
+const atRiskIds = new Set();        // filled from at-risk GeoJSON
 const HEALTH_COLOR = { Farmacia: "#2e7d32", Parafarmacia: "#00838f" };
+const AT_RISK_COLOR = "#d32f2f";    // red for at-risk ring
 
 /* ── Helpers ─────────────────────────────────────── */
 const uniq = arr => [...new Set(arr.filter(Boolean))].sort();
@@ -311,7 +302,10 @@ function fillSelect(el, vals) {
       '<hr style="margin:6px 0;border:0;border-top:1px solid #ddd5ca">' +
       '<b>Health Facilities</b>' +
       '<div><span class="dot" style="background:#2e7d32"></span>Farmacia (19 080)</div>' +
-      '<div><span class="dot" style="background:#00838f"></span>Parafarmacia (11 066)</div>';
+      '<div><span class="dot" style="background:#00838f"></span>Parafarmacia (11 066)</div>' +
+      '<hr style="margin:6px 0;border:0;border-top:1px solid #ddd5ca">' +
+      '<b>Flood Risk</b>' +
+      '<div><span class="dot" style="background:#d32f2f;border:2px solid #b71c1c"></span>At Risk (&lt; 1 km from flood)</div>';
     return d;
   };
   lg.addTo(map);
@@ -403,11 +397,21 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   applyFilters();
 });
 
-/* ── Health toggle ────────────────────────────────── */
-document.getElementById("healthToggle").addEventListener("change", function () {
-  if (this.checked) map.addLayer(healthCluster);
-  else map.removeLayer(healthCluster);
-});
+/* ── Health filter ────────────────────────────────── */
+function applyHealthFilter() {
+  const mode = document.getElementById("healthFilter").value;
+  if (mode === "hide") {
+    map.removeLayer(healthCluster);
+    map.removeLayer(atRiskCluster);
+  } else if (mode === "risk") {
+    map.removeLayer(healthCluster);
+    if (!map.hasLayer(atRiskCluster)) map.addLayer(atRiskCluster);
+  } else {
+    if (!map.hasLayer(healthCluster)) map.addLayer(healthCluster);
+    map.removeLayer(atRiskCluster);
+  }
+}
+document.getElementById("healthFilter").addEventListener("change", applyHealthFilter);
 
 /* ── Load data ───────────────────────────────────── */
 (async function () {
@@ -423,7 +427,25 @@ document.getElementById("healthToggle").addEventListener("change", function () {
     fillSelect(document.getElementById("yearFilter"),  uniq(allFeatures.map(f => f.properties.began.slice(0, 4))));
     applyFilters();
 
+    /* At-risk lookup — load first so we can flag markers */
+    const rRes = await fetch("./data/italy_health_at_risk.geojson", { cache: "no-store" });
+    if (rRes.ok) {
+      const rGeo = await rRes.json();
+      (rGeo.features || []).forEach(f => {
+        const p = f.properties;
+        atRiskIds.add(p.n + "|" + p.c);  // name + city as unique key
+      });
+    }
+
     /* Health facilities (30 146 points — loaded after floods render) */
+    healthCluster = L.markerClusterGroup({
+      maxClusterRadius: 50,
+      disableClusteringAtZoom: 14,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false
+    });
+    atRiskCluster = L.layerGroup();
+
     const hRes = await fetch("./data/italy_health_facilities.geojson", { cache: "no-store" });
     if (!hRes.ok) throw new Error("Health data: " + hRes.status);
     const hGeo = await hRes.json();
@@ -431,26 +453,45 @@ document.getElementById("healthToggle").addEventListener("change", function () {
       const [lon, lat] = f.geometry.coordinates;
       if (!isFinite(lat) || !isFinite(lon)) return;
       const p = f.properties;
-      const col = HEALTH_COLOR[p.t] || "#2e7d32";
+      const key = p.n + "|" + p.c;
+      const isRisk = atRiskIds.has(key);
+      const col = isRisk ? AT_RISK_COLOR : (HEALTH_COLOR[p.t] || "#2e7d32");
+
       const m = L.circleMarker([lat, lon], {
-        radius: 5,
-        color: col,
-        weight: 1,
+        radius: isRisk ? 8 : 5,
+        color:  isRisk ? "#b71c1c" : col,
+        weight: isRisk ? 3 : 1,
         fillColor: col,
-        fillOpacity: 0.7
+        fillOpacity: isRisk ? 0.9 : 0.7
       });
+
+      const riskBadge = isRisk
+        ? '<div style="background:#d32f2f;color:#fff;display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600;margin-bottom:6px">⚠ AT RISK — within 1 km of flood</div>'
+        : '';
       m.bindPopup(
         '<div style="font-family:Inter,sans-serif;font-size:.88rem;line-height:1.5">' +
           '<strong style="font-size:1rem;color:' + col + '">' + (p.n || '—') + '</strong>' +
-          '<div style="color:#666;margin-bottom:6px">' + (p.t || '') + (p.s ? ' — ' + p.s : '') + '</div>' +
+          '<div style="color:#666;margin-bottom:4px">' + (p.t || '') + (p.s ? ' — ' + p.s : '') + '</div>' +
+          riskBadge +
           '<div><b>Address:</b> ' + (p.a || '—') + '</div>' +
           '<div><b>City:</b> ' + (p.c || '—') + ' (' + (p.p || '') + ')</div>' +
           '<div><b>Region:</b> ' + (p.r || '—') + '</div>' +
         '</div>',
         { maxWidth: 280 }
       );
+
       healthCluster.addLayer(m);
+      if (isRisk) atRiskCluster.addLayer(
+        L.circleMarker([lat, lon], {
+          radius: 8, color: "#b71c1c", weight: 3,
+          fillColor: AT_RISK_COLOR, fillOpacity: 0.9
+        }).bindPopup(m.getPopup())
+      );
     });
+
+    /* Show all by default */
+    map.addLayer(healthCluster);
+    applyHealthFilter();
   } catch (e) {
     console.error(e);
     document.querySelector("h1").textContent = "Could not load data.";
