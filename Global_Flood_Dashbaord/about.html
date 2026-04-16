@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Global Flood Archive &mdash; Project Overview</title>
+  <meta name="description" content="Explore 35 years of global flood data from the Dartmouth Flood Observatory. Interactive charts, maps, and Italy health-facility analysis — all browser-based, no install needed." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
@@ -118,7 +119,10 @@
     /* ─── Inline stats ───────────────────────────────── */
     .stats-row {
       display: flex; justify-content: center; flex-wrap: wrap;
-      gap: 2rem; padding: 2rem 2rem 0;
+      gap: 2rem; padding: 1.5rem 2rem;
+      max-width: 680px; margin: 0 auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
     }
 
     .stat {
@@ -266,6 +270,13 @@
     .btn:hover { border-color: var(--teal); color: var(--teal); }
     .btn svg { width: 15px; height: 15px; }
 
+    .btn-primary {
+      background: var(--teal); color: #0d1117;
+      border-color: var(--teal);
+    }
+
+    .btn-primary:hover { background: #0d9488; border-color: #0d9488; }
+
     .sources-list {
       list-style: none; display: flex; flex-direction: column; gap: 0.6rem;
     }
@@ -346,6 +357,12 @@
       An open-source collection of tools to explore, analyse, and map flood events
       from the Dartmouth Flood Observatory &mdash; 1985 to 2021.
     </p>
+    <div style="margin-top:2rem;">
+      <a class="btn btn-primary" href="#tools">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;"><path d="M6 9l6 6 6-6"/></svg>
+        Explore the tools
+      </a>
+    </div>
   </section>
 
   <!-- STATS -->
