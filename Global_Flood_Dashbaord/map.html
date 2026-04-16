@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flood Archive — Global Map Explorer</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet MarkerCluster CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Design Tokens ─────────────────────────────────────── */
+    :root {
+      --bg:          #0d1117;
+      --surface:     #161b22;
+      --surface-2:   #21262d;
+      --border:      #30363d;
+      --teal:        #2dd4bf;
+      --teal-dim:    rgba(45,212,191,0.12);
+      --amber:       #f59e0b;
+      --red:         #f87171;
+      --text:        #e6edf3;
+      --text-muted:  #8b949e;
+      --sidebar-w:   320px;
+      --nav-h:       56px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── Nav ───────────────────────────────────────────────── */
+    nav {
+      height: var(--nav-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+    .nav-icon {
+      width: 32px; height: 32px;
+      background: var(--teal);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-icon svg { width: 18px; height: 18px; color: #0d1117; }
+    .nav-title { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+    .nav-subtitle { font-size: 12px; color: var(--text-muted); margin-left: 2px; }
+    .nav-spacer { flex: 1; }
+    .nav-badge {
+      font-size: 11px; font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--teal-dim);
+      color: var(--teal);
+      border: 1px solid rgba(45,212,191,0.3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ─── Body Layout ───────────────────────────────────────── */
+    .body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ─── Sidebar ───────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .sidebar-scroll {
+      overflow-y: auto;
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ─── Drop Zone ─────────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.over {
+      border-color: var(--teal);
+      background: var(--teal-dim);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon {
+      width: 40px; height: 40px;
+      background: var(--surface-2);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+    }
+    .drop-icon svg { width: 20px; height: 20px; color: var(--teal); }
+    .drop-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .drop-sub { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+    .drop-hint {
+      margin-top: 10px;
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--surface-2);
+      padding: 6px 10px;
+      border-radius: 6px;
+      text-align: left;
+      line-height: 1.8;
+    }
+    .drop-hint span { color: var(--teal); }
+
+    /* load built-in button */
+    .btn-builtin {
+      width: 100%;
+      padding: 9px 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-builtin:hover {
+      background: var(--teal-dim);
+      border-color: var(--teal);
+      color: var(--teal);
+    }
+    .btn-builtin svg { width: 14px; height: 14px; }
+
+    /* ─── Section Label ─────────────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    /* ─── Stat Cards ────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .stat-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--teal); line-height: 1; }
+    .stat-sub { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ─── Filters ───────────────────────────────────────────── */
+    .filter-block { display: flex; flex-direction: column; gap: 8px; }
+    .filter-row { display: flex; flex-direction: column; gap: 4px; }
+    .filter-row label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+    .filter-row select,
+    .filter-row input[type="range"] {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      padding: 7px 10px;
+      appearance: none;
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-row select:hover { border-color: var(--teal); }
+    .filter-row select option { background: var(--surface); }
+    .range-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      height: 4px;
+      background: var(--border);
+      border: none !important;
+      border-radius: 4px;
+      padding: 0 !important;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--teal);
+      cursor: pointer;
+    }
+
+    /* ─── Legend ────────────────────────────────────────────── */
+    .legend { display: flex; flex-direction: column; gap: 6px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* ─── Map area ──────────────────────────────────────────── */
+    #map {
+      flex: 1;
+      background: #0d1117;
+    }
+
+    /* ─── Popup ─────────────────────────────────────────────── */
+    .leaflet-popup-content-wrapper {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      padding: 0;
+    }
+    .leaflet-popup-content { margin: 0; }
+    .leaflet-popup-tip { background: var(--surface); }
+    .popup-inner { padding: 14px 16px; min-width: 200px; }
+    .popup-country { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--teal); }
+    .popup-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; gap: 16px; }
+    .popup-val { color: var(--text); font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+
+    /* ─── Empty state ───────────────────────────────────────── */
+    .empty-state {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      z-index: 500;
+    }
+    .empty-icon {
+      width: 64px; height: 64px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .empty-icon svg { width: 32px; height: 32px; color: var(--text-muted); }
+    .empty-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .empty-sub { font-size: 12px; color: var(--text-muted); }
+
+    /* ─── Toast ─────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 12px;
+      color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      max-width: 320px;
+    }
+    #toast.show { display: flex; }
+    #toast .toast-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+    #toast.error .toast-dot { background: var(--red); }
+
+    /* ─── Loading bar ───────────────────────────────────────── */
+    #loader {
+      height: 2px;
+      background: var(--teal);
+      width: 0%;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 9999;
+      transition: width 0.3s;
+      display: none;
+    }
+
+    /* ─── Map dark tiles override ───────────────────────────── */
+    .leaflet-tile-pane { filter: brightness(0.7) saturate(0.6); }
+
+    /* ─── Cluster overrides ─────────────────────────────────── */
+    .marker-cluster-small,
+    .marker-cluster-medium,
+    .marker-cluster-large {
+      background: rgba(45,212,191,0.18) !important;
+    }
+    .marker-cluster-small div,
+    .marker-cluster-medium div,
+    .marker-cluster-large div {
+      background: rgba(45,212,191,0.35) !important;
+      color: #fff !important;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* divider */
+    .divider { height: 1px; background: var(--border); }
+
+    /* clear btn */
+    .btn-clear {
+      width: 100%;
+      padding: 8px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-clear:hover { border-color: var(--red); color: var(--red); }
+    .btn-clear svg { width: 12px; height: 12px; }
+  </style>
+</head>
+<body>
+
+<!-- Loading bar -->
+<div id="loader"></div>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/>
+    </svg>
+  </div>
+  <div>
+    <div class="nav-title">Flood Archive — Map Explorer</div>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-badge" id="event-count">0 events</div>
+</nav>
+
+<!-- Body -->
+<div class="body">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-scroll">
+
+      <!-- Drop zone -->
+      <div>
+        <div class="section-label">Dataset</div>
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input" accept=".csv,.xls,.txt" />
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="drop-title">Drop your CSV here</div>
+          <div class="drop-sub">or click to browse a file from your computer</div>
+          <div class="drop-hint">
+            Required columns:<br/>
+            <span>lat</span>, <span>long</span> (coordinates)<br/>
+            Any other columns appear in popups
+          </div>
+        </div>
+
+        <div style="margin-top:8px;">
+          <button class="btn-builtin" id="load-builtin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/>
+            </svg>
+            Load built-in Flood Archive dataset
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Stats -->
+      <div>
+        <div class="section-label">Summary</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Events</div>
+            <div class="stat-value" id="stat-events">—</div>
+            <div class="stat-sub">on map</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Countries</div>
+            <div class="stat-value" id="stat-countries">—</div>
+            <div class="stat-sub">affected</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Displaced</div>
+            <div class="stat-value" id="stat-displaced">—</div>
+            <div class="stat-sub">total people</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Deaths</div>
+            <div class="stat-value" id="stat-dead">—</div>
+            <div class="stat-sub">recorded</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Filters -->
+      <div>
+        <div class="section-label">Filters</div>
+        <div class="filter-block">
+
+          <div class="filter-row">
+            <label for="filter-cause">Cause / Category</label>
+            <select id="filter-cause">
+              <option value="">All causes</option>
+            </select>
+          </div>
+
+          <div class="filter-row">
+            <label for="filter-severity">Severity</label>
+            <select id="filter-severity">
+              <option value="">All severities</option>
+            </select>
+          </div>
+
+          <div class="filter-row" id="year-filter-row" style="display:none;">
+            <label>Year: <span id="year-val">all</span></label>
+            <input type="range" id="filter-year" min="1985" max="2021" step="1" />
+            <div class="range-labels"><span id="yr-min">1985</span><span>— drag to filter —</span><span id="yr-max">2021</span></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Legend -->
+      <div>
+        <div class="section-label">Legend — Severity</div>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#2dd4bf;"></div>
+            <span>1.0 — Minor event</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#f59e0b;"></div>
+            <span>1.5 — Moderate event</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#f87171;"></div>
+            <span>2.0 — Severe event</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#a78bfa;"></div>
+            <span>Other / Unknown</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Clear -->
+      <button class="btn-clear" id="btn-clear">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+        </svg>
+        Clear map &amp; data
+      </button>
+
+    </div>
+  </aside>
+
+  <!-- Map -->
+  <div style="position:relative; flex:1;">
+    <div id="map"></div>
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <div class="empty-title">No data loaded</div>
+      <div class="empty-sub">Drop a CSV or load the built-in dataset<br/>to explore events on the map.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div id="toast">
+  <div class="toast-dot"></div>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+
+<script>
+  // ─── Helpers ────────────────────────────────────────────────
+  function fmtNum(n) {
+    if (!n || isNaN(n)) return '—';
+    n = +n;
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+    return n.toLocaleString();
+  }
+
+  function showToast(msg, type = 'ok') {
+    const t = document.getElementById('toast');
+    const m = document.getElementById('toast-msg');
+    t.className = 'show' + (type === 'error' ? ' error' : '');
+    m.textContent = msg;
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => t.className = '', 3500);
+  }
+
+  function setLoader(pct) {
+    const l = document.getElementById('loader');
+    if (pct === null) { l.style.display = 'none'; l.style.width = '0%'; return; }
+    l.style.display = 'block';
+    l.style.width = pct + '%';
+    if (pct >= 100) setTimeout(() => setLoader(null), 400);
+  }
+
+  // ─── Map init ───────────────────────────────────────────────
+  const map = L.map('map', { zoomControl: true }).setView([20, 10], 2);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(map);
+
+  let clusterGroup = L.markerClusterGroup({ maxClusterRadius: 60 });
+  map.addLayer(clusterGroup);
+
+  // ─── State ──────────────────────────────────────────────────
+  let allRows = [];       // full parsed dataset
+  let columns = [];       // detected column names
+  let latCol = null;
+  let lngCol = null;
+
+  // ─── Colour by severity ─────────────────────────────────────
+  function severityColor(row) {
+    const s = parseFloat(row['Severity'] || row['severity'] || '');
+    if (s === 1.0) return '#2dd4bf';
+    if (s === 1.5) return '#f59e0b';
+    if (s === 2.0) return '#f87171';
+    return '#a78bfa';
+  }
+
+  function makeMarker(row) {
+    const lat = parseFloat(row[latCol]);
+    const lng = parseFloat(row[lngCol]);
+    if (isNaN(lat) || isNaN(lng)) return null;
+
+    const color = severityColor(row);
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width:10px;height:10px;border-radius:50%;
+        background:${color};
+        border:2px solid rgba(255,255,255,0.25);
+        box-shadow:0 0 6px ${color}88;
+      "></div>`,
+      iconSize: [10, 10],
+      iconAnchor: [5, 5]
+    });
+
+    const marker = L.marker([lat, lng], { icon });
+
+    // Build popup
+    const exclude = [latCol, lngCol];
+    const rows = Object.entries(row)
+      .filter(([k]) => !exclude.includes(k) && row[k] !== '' && row[k] !== null)
+      .map(([k, v]) => `<div class="popup-row"><span>${k}</span><span class="popup-val">${v}</span></div>`)
+      .join('');
+
+    const country = row['Country'] || row['country'] || row['COUNTRY'] || '';
+    marker.bindPopup(`
+      <div class="popup-inner">
+        <div class="popup-country">${country || 'Event'}</div>
+        ${rows}
+      </div>
+    `, { maxWidth: 280 });
+
+    return marker;
+  }
+
+  // ─── Render markers from filtered rows ──────────────────────
+  function renderMarkers(rows) {
+    clusterGroup.clearLayers();
+    let placed = 0;
+    rows.forEach(row => {
+      const m = makeMarker(row);
+      if (m) { clusterGroup.addLayer(m); placed++; }
+    });
+    updateStats(rows, placed);
+    document.getElementById('event-count').textContent = placed.toLocaleString() + ' events';
+    document.getElementById('empty-state').style.display = placed === 0 ? 'block' : 'none';
+  }
+
+  // ─── Stats ───────────────────────────────────────────────────
+  function updateStats(rows, placed) {
+    const countries = new Set(rows.map(r => r['Country'] || r['country'] || '')).size;
+    const displaced = rows.reduce((s, r) => s + (parseFloat(r['Displaced'] || r['displaced'] || 0) || 0), 0);
+    const dead = rows.reduce((s, r) => s + (parseFloat(r['Dead'] || r['dead'] || 0) || 0), 0);
+
+    document.getElementById('stat-events').textContent = fmtNum(placed);
+    document.getElementById('stat-countries').textContent = fmtNum(countries);
+    document.getElementById('stat-displaced').textContent = fmtNum(displaced);
+    document.getElementById('stat-dead').textContent = fmtNum(dead);
+  }
+
+  // ─── Detect lat/lng columns ──────────────────────────────────
+  function detectLatLng(cols) {
+    const latNames = ['lat', 'latitude', 'Lat', 'LAT', 'LATITUDE', 'y', 'Y'];
+    const lngNames = ['long', 'lon', 'lng', 'longitude', 'Long', 'LON', 'LNG', 'LONGITUDE', 'x', 'X'];
+    latCol = cols.find(c => latNames.includes(c)) || null;
+    lngCol = cols.find(c => lngNames.includes(c)) || null;
+    return latCol && lngCol;
+  }
+
+  // ─── Populate filter dropdowns ──────────────────────────────
+  function populateFilters(rows, cols) {
+    // Cause
+    const causeCol = cols.find(c => ['categorised_reason','cause','Cause','category','Category'].includes(c));
+    const causeEl = document.getElementById('filter-cause');
+    causeEl.innerHTML = '<option value="">All causes</option>';
+    if (causeCol) {
+      [...new Set(rows.map(r => r[causeCol]).filter(Boolean))].sort().forEach(v => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = v;
+        causeEl.appendChild(o);
+      });
+    }
+
+    // Severity
+    const sevEl = document.getElementById('filter-severity');
+    sevEl.innerHTML = '<option value="">All severities</option>';
+    const sevCol = cols.find(c => ['Severity','severity','SEVERITY'].includes(c));
+    if (sevCol) {
+      [...new Set(rows.map(r => r[sevCol]).filter(Boolean))].sort().forEach(v => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = v;
+        sevEl.appendChild(o);
+      });
+    }
+
+    // Year range
+    const yearCol = cols.find(c => ['Year','year','YEAR'].includes(c));
+    const yearRow = document.getElementById('year-filter-row');
+    if (yearCol) {
+      const years = rows.map(r => parseInt(r[yearCol])).filter(y => !isNaN(y));
+      const minY = Math.min(...years);
+      const maxY = Math.max(...years);
+      const slider = document.getElementById('filter-year');
+      slider.min = minY; slider.max = maxY; slider.value = maxY;
+      document.getElementById('yr-min').textContent = minY;
+      document.getElementById('yr-max').textContent = maxY;
+      document.getElementById('year-val').textContent = 'all';
+      slider.dataset.col = yearCol;
+      yearRow.style.display = 'flex';
+    } else {
+      yearRow.style.display = 'none';
+    }
+
+    // Store col refs
+    if (causeCol) causeEl.dataset.col = causeCol;
+    if (sevCol) sevEl.dataset.col = sevCol;
+  }
+
+  // ─── Apply filters ───────────────────────────────────────────
+  function applyFilters() {
+    if (!allRows.length) return;
+    const causeEl = document.getElementById('filter-cause');
+    const sevEl = document.getElementById('filter-severity');
+    const yearEl = document.getElementById('filter-year');
+
+    let filtered = allRows;
+
+    const causeVal = causeEl.value;
+    if (causeVal && causeEl.dataset.col) {
+      filtered = filtered.filter(r => r[causeEl.dataset.col] === causeVal);
+    }
+
+    const sevVal = sevEl.value;
+    if (sevVal && sevEl.dataset.col) {
+      filtered = filtered.filter(r => r[sevEl.dataset.col] === sevVal);
+    }
+
+    const yearVal = yearEl.value;
+    const yearCol = yearEl.dataset.col;
+    if (yearVal && yearCol && document.getElementById('year-val').textContent !== 'all') {
+      filtered = filtered.filter(r => parseInt(r[yearCol]) <= parseInt(yearVal));
+    }
+
+    renderMarkers(filtered);
+  }
+
+  document.getElementById('filter-cause').addEventListener('change', applyFilters);
+  document.getElementById('filter-severity').addEventListener('change', applyFilters);
+
+  const yearSlider = document.getElementById('filter-year');
+  yearSlider.addEventListener('input', function () {
+    document.getElementById('year-val').textContent = this.value;
+    applyFilters();
+  });
+  yearSlider.addEventListener('dblclick', function () {
+    document.getElementById('year-val').textContent = 'all';
+    applyFilters();
+  });
+
+  // ─── Load data ───────────────────────────────────────────────
+  function loadData(text, filename) {
+    setLoader(30);
+    Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function (result) {
+        setLoader(70);
+        const rows = result.data;
+        columns = result.meta.fields || [];
+
+        if (!detectLatLng(columns)) {
+          showToast('Could not find lat/lng columns. Need columns named lat, long (or similar).', 'error');
+          setLoader(null);
+          return;
+        }
+
+        allRows = rows;
+        populateFilters(rows, columns);
+        renderMarkers(rows);
+        if (rows.length) map.setView([20, 10], 2);
+        setLoader(100);
+        showToast(`Loaded ${rows.length.toLocaleString()} records from "${filename}"`);
+      },
+      error: function (err) {
+        showToast('Failed to parse file: ' + err.message, 'error');
+        setLoader(null);
+      }
+    });
+  }
+
+  // ─── Load built-in dataset ───────────────────────────────────
+  document.getElementById('load-builtin').addEventListener('click', function () {
+    setLoader(10);
+    fetch('floodarchive_cleaned.csv.xls')
+      .then(r => {
+        if (!r.ok) throw new Error('File not found');
+        return r.text();
+      })
+      .then(text => loadData(text, 'floodarchive_cleaned.csv.xls'))
+      .catch(() => {
+        setLoader(null);
+        showToast('Built-in dataset not found. Please open this file from its folder, not a different directory.', 'error');
+      });
+  });
+
+  // ─── File input ──────────────────────────────────────────────
+  document.getElementById('file-input').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => loadData(evt.target.result, file.name);
+    reader.readAsText(file);
+  });
+
+  // ─── Drag & drop ─────────────────────────────────────────────
+  const dz = document.getElementById('drop-zone');
+
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('over');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => loadData(evt.target.result, file.name);
+    reader.readAsText(file);
+  });
+
+  // ─── Clear ───────────────────────────────────────────────────
+  document.getElementById('btn-clear').addEventListener('click', function () {
+    allRows = [];
+    clusterGroup.clearLayers();
+    document.getElementById('stat-events').textContent = '—';
+    document.getElementById('stat-countries').textContent = '—';
+    document.getElementById('stat-displaced').textContent = '—';
+    document.getElementById('stat-dead').textContent = '—';
+    document.getElementById('event-count').textContent = '0 events';
+    document.getElementById('filter-cause').innerHTML = '<option value="">All causes</option>';
+    document.getElementById('filter-severity').innerHTML = '<option value="">All severities</option>';
+    document.getElementById('year-filter-row').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'block';
+    showToast('Map cleared.');
+  });
+
+  // ─── Initial empty state ─────────────────────────────────────
+  document.getElementById('empty-state').style.display = 'block';
+</script>
+</body>
+</html>
