@@ -17,16 +17,16 @@
   <style>
     /* ─── Design Tokens ─────────────────────────────────────── */
     :root {
-      --bg:          #0d1117;
-      --surface:     #161b22;
-      --surface-2:   #21262d;
-      --border:      #30363d;
-      --teal:        #2dd4bf;
-      --teal-dim:    rgba(45,212,191,0.12);
-      --amber:       #f59e0b;
-      --red:         #f87171;
-      --text:        #e6edf3;
-      --text-muted:  #8b949e;
+      --bg:          #f5f5f4;
+      --surface:     #ffffff;
+      --surface-2:   #f0f0ee;
+      --border:      #e5e5e3;
+      --teal:        #0d9488;
+      --teal-dim:    rgba(13,148,136,0.08);
+      --amber:       #f97316;
+      --red:         #ef4444;
+      --text:        #1a1a1a;
+      --text-muted:  #737373;
       --sidebar-w:   320px;
       --nav-h:       56px;
     }
@@ -46,14 +46,15 @@
     /* ─── Nav ───────────────────────────────────────────────── */
     nav {
       height: var(--nav-h);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #0f172a 0%, #0d9488 100%);
+      border-bottom: 3px solid var(--amber);
       display: flex;
       align-items: center;
       padding: 0 20px;
       gap: 12px;
       flex-shrink: 0;
       z-index: 1000;
+      color: #fff;
     }
     .nav-icon {
       width: 32px; height: 32px;
@@ -61,17 +62,17 @@
       border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
     }
-    .nav-icon svg { width: 18px; height: 18px; color: #0d1117; }
-    .nav-title { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
-    .nav-subtitle { font-size: 12px; color: var(--text-muted); margin-left: 2px; }
+    .nav-icon svg { width: 18px; height: 18px; color: #fff; }
+    .nav-title { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; color: #fff; }
+    .nav-subtitle { font-size: 12px; color: rgba(255,255,255,0.7); margin-left: 2px; }
     .nav-spacer { flex: 1; }
     .nav-badge {
       font-size: 11px; font-weight: 600;
       padding: 3px 10px;
       border-radius: 20px;
-      background: var(--teal-dim);
-      color: var(--teal);
-      border: 1px solid rgba(45,212,191,0.3);
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
       font-family: 'JetBrains Mono', monospace;
     }
 
@@ -91,6 +92,7 @@
       flex-direction: column;
       overflow: hidden;
       flex-shrink: 0;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.04);
     }
     .sidebar-scroll {
       overflow-y: auto;
@@ -190,6 +192,8 @@
     }
     .stat-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
     .stat-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--teal); line-height: 1; }
+    .stat-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; transition: box-shadow 0.2s; }
+    .stat-card:hover { box-shadow: 0 2px 8px rgba(13,148,136,0.1); }
     .stat-sub { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
 
     /* ─── Filters ───────────────────────────────────────────── */
@@ -211,7 +215,7 @@
       cursor: pointer;
     }
     .filter-row select:hover { border-color: var(--teal); }
-    .filter-row select option { background: var(--surface); }
+    .filter-row select option { background: #fff; }
     .range-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
 
     input[type="range"] {
@@ -252,20 +256,20 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      background: #0d1117;
+      background: #f5f5f4;
     }
 
     /* ─── Popup ─────────────────────────────────────────────── */
     .leaflet-popup-content-wrapper {
-      background: var(--surface);
+      background: #fff;
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 10px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
       padding: 0;
     }
     .leaflet-popup-content { margin: 0; }
-    .leaflet-popup-tip { background: var(--surface); }
+    .leaflet-popup-tip { background: #fff; }
     .popup-inner { padding: 14px 16px; min-width: 200px; }
     .popup-country { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--teal); }
     .popup-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; gap: 16px; }
@@ -282,7 +286,7 @@
     }
     .empty-icon {
       width: 64px; height: 64px;
-      background: var(--surface);
+      background: #fff;
       border: 1px solid var(--border);
       border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
@@ -296,13 +300,13 @@
     #toast {
       position: fixed;
       bottom: 24px; right: 24px;
-      background: var(--surface);
+      background: #fff;
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 12px 18px;
       font-size: 12px;
       color: var(--text);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
       z-index: 9999;
       display: none;
       align-items: center;
@@ -325,19 +329,18 @@
       display: none;
     }
 
-    /* ─── Map dark tiles override ───────────────────────────── */
-    .leaflet-tile-pane { filter: brightness(0.7) saturate(0.6); }
+    /* ─── Map tiles — no filter needed for light theme ──────── */
 
     /* ─── Cluster overrides ─────────────────────────────────── */
     .marker-cluster-small,
     .marker-cluster-medium,
     .marker-cluster-large {
-      background: rgba(45,212,191,0.18) !important;
+      background: rgba(13,148,136,0.15) !important;
     }
     .marker-cluster-small div,
     .marker-cluster-medium div,
     .marker-cluster-large div {
-      background: rgba(45,212,191,0.35) !important;
+      background: rgba(13,148,136,0.45) !important;
       color: #fff !important;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
@@ -369,7 +372,7 @@
       outline: none;
       cursor: pointer;
     }
-    .col-picker-row select option { background: var(--surface); }
+    .col-picker-row select option { background: #fff; }
     .col-picker-note {
       font-size: 10px;
       color: var(--amber);
@@ -386,7 +389,7 @@
       background: var(--teal);
       border: none;
       border-radius: 8px;
-      color: #0d1117;
+      color: #fff;
       font-size: 12px;
       font-family: 'Inter', sans-serif;
       font-weight: 700;
@@ -564,19 +567,19 @@
         <div class="section-label">Legend — Severity</div>
         <div class="legend">
           <div class="legend-item">
-            <div class="legend-dot" style="background:#2dd4bf;"></div>
+            <div class="legend-dot" style="background:#0d9488;"></div>
             <span>1.0 — Minor event</span>
           </div>
           <div class="legend-item">
-            <div class="legend-dot" style="background:#f59e0b;"></div>
+            <div class="legend-dot" style="background:#f97316;"></div>
             <span>1.5 — Moderate event</span>
           </div>
           <div class="legend-item">
-            <div class="legend-dot" style="background:#f87171;"></div>
+            <div class="legend-dot" style="background:#ef4444;"></div>
             <span>2.0 — Severe event</span>
           </div>
           <div class="legend-item">
-            <div class="legend-dot" style="background:#a78bfa;"></div>
+            <div class="legend-dot" style="background:#737373;"></div>
             <span>Other / Unknown</span>
           </div>
         </div>
@@ -654,7 +657,7 @@
   // ─── Map init ───────────────────────────────────────────────
   const map = L.map('map', { zoomControl: true, preferCanvas: true }).setView([20, 10], 2);
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19,
     crossOrigin: true
@@ -676,10 +679,10 @@
   // ─── Colour by severity ─────────────────────────────────────
   function severityColor(row) {
     const s = parseFloat(row['Severity'] || row['severity'] || '');
-    if (s === 1.0) return '#2dd4bf';
-    if (s === 1.5) return '#f59e0b';
-    if (s === 2.0) return '#f87171';
-    return '#a78bfa';
+    if (s === 1.0) return '#0d9488';
+    if (s === 1.5) return '#f97316';
+    if (s === 2.0) return '#ef4444';
+    return '#737373';
   }
 
   function makeMarker(row) {
@@ -693,8 +696,8 @@
       html: `<div style="
         width:10px;height:10px;border-radius:50%;
         background:${color};
-        border:2px solid rgba(255,255,255,0.25);
-        box-shadow:0 0 6px ${color}88;
+        border:2px solid rgba(255,255,255,0.9);
+        box-shadow:0 0 8px ${color}66;
       "></div>`,
       iconSize: [10, 10],
       iconAnchor: [5, 5]
