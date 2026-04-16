@@ -470,6 +470,7 @@
     <ul class="nav-links">
       <li><a href="#tools">Tools</a></li>
       <li><a href="#about">About</a></li>
+      <li><a href="#all-pages">All Pages</a></li>
       <li><a href="https://github.com/rezhyarfakhir-dev/ICT_Course_Crush" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
   </nav>
@@ -512,7 +513,7 @@
       <div class="label">Years of Data</div>
     </div>
     <div class="stat">
-      <div class="num">2</div>
+      <div class="num">5</div>
       <div class="label">Tools Available</div>
     </div>
   </div>
@@ -520,10 +521,10 @@
   <!-- TOOLS -->
   <section class="section" id="tools">
     <div class="section-label">Explore</div>
-    <h2 class="section-title">Two ways to explore the data</h2>
+    <h2 class="section-title">Five ways to explore the data</h2>
     <p class="section-sub">
-      Use the chart dashboard for trends and statistics, or switch to the interactive map
-      to see where floods happened &mdash; and drag in your own dataset.
+      Use the chart dashboard for trends and statistics, the interactive maps
+      to see where floods happened, or explore Italy-specific health infrastructure data.
     </p>
 
     <div class="tools-grid">
@@ -554,7 +555,7 @@
           </div>
           <span class="tool-tag">Interactive Map</span>
         </div>
-        <h3>Flood Map Viewer</h3>
+        <h3>Global Flood Map</h3>
         <p>5,130 flood events plotted on a global Leaflet map. Filter by severity, cause, and year &mdash; or drag and drop any compatible CSV to visualise it instantly.</p>
         <div class="tool-footer">
           <span class="tool-meta">map.html &middot; Leaflet.js</span>
@@ -564,6 +565,80 @@
           </span>
         </div>
       </a>
+
+      <!-- Flood Archive Global -->
+      <a class="tool-card" href="../Flood_Archive/index.html">
+        <div class="tool-header">
+          <div class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <span class="tool-tag">Global Map</span>
+        </div>
+        <h3>Flood Archive &mdash; Global</h3>
+        <p>A Leaflet map of all 5,130 flood events worldwide from the DFO archive, with severity-coloured markers, popups, and clustering.</p>
+        <div class="tool-footer">
+          <span class="tool-meta">Flood_Archive/ &middot; Leaflet.js</span>
+          <span class="arrow">
+            Open
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <!-- Italy Flood + Health Map -->
+      <a class="tool-card amber" href="../Flood_Archive_Italy/index.html">
+        <div class="tool-header">
+          <div class="tool-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <span class="tool-tag">Italy Focus</span>
+        </div>
+        <h3>Italy &mdash; Floods &amp; Health Facilities</h3>
+        <p>42 Italian flood events overlaid with 39,181 health facilities (hospitals, pharmacies, clinics, doctors, dentists). 19 at-risk facilities within 1&nbsp;km of a flood.</p>
+        <div class="tool-footer">
+          <span class="tool-meta">Flood_Archive_Italy/ &middot; Leaflet.js</span>
+          <span class="arrow">
+            Open
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ALL PAGES -->
+  <section class="section" id="all-pages">
+    <hr class="divider" />
+    <div class="section-label">Directory</div>
+    <h2 class="section-title">All live pages</h2>
+    <p class="section-sub">Every published page in this project, organised by folder.</p>
+
+    <div class="about-grid" style="margin-top:2rem;">
+      <ul class="sources-list">
+        <li>
+          <span class="source-dot"></span>
+          <span>
+            <strong>Global Flood Dashboard</strong><br/>
+            <a href="about.html" style="color:var(--teal);">about.html</a> &mdash; This page (project overview)<br/>
+            <a href="index.html" style="color:var(--teal);">index.html</a> &mdash; Analytics dashboard (4 charts)<br/>
+            <a href="map.html" style="color:var(--teal);">map.html</a> &mdash; Global flood map explorer
+          </span>
+        </li>
+        <li>
+          <span class="source-dot amber"></span>
+          <span>
+            <strong>Flood Archive</strong><br/>
+            <a href="../Flood_Archive/index.html" style="color:var(--amber);">Flood_Archive/index.html</a> &mdash; Global flood events map (5,130 events)
+          </span>
+        </li>
+        <li>
+          <span class="source-dot amber"></span>
+          <span>
+            <strong>Flood Archive &mdash; Italy</strong><br/>
+            <a href="../Flood_Archive_Italy/index.html" style="color:var(--amber);">Flood_Archive_Italy/index.html</a> &mdash; Italy floods + 39,181 health facilities
+          </span>
+        </li>
+      </ul>
     </div>
   </section>
 
