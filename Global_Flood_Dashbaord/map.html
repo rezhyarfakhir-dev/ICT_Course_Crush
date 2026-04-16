@@ -651,12 +651,19 @@
   }
 
   // ─── Map init ───────────────────────────────────────────────
-  const map = L.map('map', { zoomControl: true, preferCanvas: true }).setView([20, 10], 2);
+  const map = L.map('map', {
+    zoomControl: true,
+    preferCanvas: true,
+    maxBounds: [[-85, -180], [85, 180]],
+    maxBoundsViscosity: 1.0,
+    minZoom: 2
+  }).setView([20, 10], 2);
 
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
     attribution: '&copy; Esri, HERE, Garmin, USGS, NGA',
     maxZoom: 19,
-    crossOrigin: true
+    crossOrigin: true,
+    noWrap: true
   }).addTo(map);
 
   // Force Leaflet to recalculate dimensions after layout is ready
