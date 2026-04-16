@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Flood Dashboard</title>
+
+  <!--
+    ╔══════════════════════════════════════════════════════════╗
+    ║  WHAT IS THIS PAGE?                                     ║
+    ║                                                         ║
+    ║  A dashboard that reads a cleaned CSV file of 5,130     ║
+    ║  flood events (1985 – 2021) from the Dartmouth Flood    ║
+    ║  Observatory Global Active Archive and displays four    ║
+    ║  charts powered by Chart.js.                            ║
+    ║                                                         ║
+    ║  LIBRARIES USED (loaded from CDN):                      ║
+    ║  • Chart.js  – draws the charts                         ║
+    ║  • PapaParse – reads the CSV file in the browser        ║
+    ╚══════════════════════════════════════════════════════════╝
+  -->
+
+  <!-- Chart.js: the library that draws pretty charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+  <!-- PapaParse: reads CSV files in the browser so we don't need a server -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- Google Font for a clean look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Reset & base ──────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0f2f5;          /* light grey page background */
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ── Header banner ─────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+      color: #fff;
+      text-align: center;
+      padding: 28px 16px 22px;
+    }
+    header h1 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      font-size: 0.88rem;
+      margin-top: 6px;
+      opacity: 0.85;
+    }
+
+    /* ── Card grid ─────────────────────────────────── */
+    .grid {
+      display: grid;
+      /* Two columns on wide screens, one on narrow */
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 20px;
+      max-width: 1280px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.07);
+      padding: 20px 24px 16px;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #334155;
+    }
+
+    /* Make each canvas responsive inside its card */
+    .card canvas {
+      width: 100% !important;
+      max-height: 380px;
+    }
+
+    /* ── Loading message ───────────────────────────── */
+    #loading {
+      text-align: center;
+      padding: 60px 16px;
+      font-size: 1.1rem;
+      color: #64748b;
+    }
+
+    /* ── Footer ────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 18px 16px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════
+       HEADER
+       ════════════════════════════════════════════════ -->
+  <header>
+    <h1>Global Flood Dashboard</h1>
+    <p>5,130 flood events · 1985 – 2021 · Dartmouth Flood Observatory</p>
+  </header>
+
+  <!-- This message shows while the CSV is loading -->
+  <div id="loading">Loading data …</div>
+
+  <!-- ════════════════════════════════════════════════
+       CHART CARDS — hidden until data is ready
+       ════════════════════════════════════════════════ -->
+  <div class="grid" id="dashboard" style="display:none">
+
+    <!-- Card 1: Top 20 countries -->
+    <div class="card">
+      <h2>1 · Flood Events by Country (Top 20)</h2>
+      <canvas id="chartCountry"></canvas>
+    </div>
+
+    <!-- Card 2: Events per year -->
+    <div class="card">
+      <h2>2 · Flood Events per Year</h2>
+      <canvas id="chartYear"></canvas>
+    </div>
+
+    <!-- Card 3: Events by cause category -->
+    <div class="card">
+      <h2>3 · Events by Cause Category</h2>
+      <canvas id="chartCategory"></canvas>
+    </div>
+
+    <!-- Card 4: Total displaced by severity -->
+    <div class="card">
+      <h2>4 · Total Displaced by Severity</h2>
+      <canvas id="chartSeverity"></canvas>
+    </div>
+
+  </div>
+
+  <footer>
+    Source: DFO / CKAN Global Active Archive of Large Flood Events
+  </footer>
+
+  <!-- ════════════════════════════════════════════════
+       JAVASCRIPT — reads the CSV, counts things,
+       and feeds numbers into Chart.js
+       ════════════════════════════════════════════════ -->
+  <script>
+  /*
+    HOW THIS WORKS (step by step):
+
+    1. PapaParse reads the CSV file (floodarchive_cleaned.csv.xls).
+    2. We loop through every row and COUNT how many events belong
+       to each country, year, category, and severity.
+    3. We give those counts to Chart.js which draws the charts.
+
+    That's it! No server, no database — everything runs in your browser.
+  */
+
+  // ── Step 1: Load the CSV ──────────────────────────
+  Papa.parse("floodarchive_cleaned.csv.xls", {
+    download: true,       // fetch the file from the server
+    header: true,         // first row = column names
+    skipEmptyLines: true, // ignore blank lines
+
+    // This function runs once ALL rows have been read:
+    complete: function (results) {
+      const rows = results.data;   // array of objects, one per row
+
+      // Hide the "Loading" message, show the dashboard
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("dashboard").style.display = "";
+
+      // ── Step 2: Count things ────────────────────────
+
+      // --- 2a. Count events per COUNTRY ---
+      const countryCount = {};          // empty object to store counts
+      rows.forEach(function (row) {
+        const c = (row.Country || "").trim();
+        if (!c) return;                 // skip blank
+        countryCount[c] = (countryCount[c] || 0) + 1;
+      });
+
+      // Sort countries by count (most events first), keep top 20
+      const countrySorted = Object.entries(countryCount)   // [["INDIA", 312], …]
+        .sort(function (a, b) { return b[1] - a[1]; })    // biggest first
+        .slice(0, 20);                                     // only top 20
+
+      const countryLabels = countrySorted.map(function (e) { return e[0]; });
+      const countryValues = countrySorted.map(function (e) { return e[1]; });
+
+      // --- 2b. Count events per YEAR ---
+      const yearCount = {};
+      rows.forEach(function (row) {
+        const y = (row.Year || "").trim();
+        if (!y) return;
+        yearCount[y] = (yearCount[y] || 0) + 1;
+      });
+
+      // Sort years in chronological order
+      const yearLabels = Object.keys(yearCount).sort();
+      const yearValues = yearLabels.map(function (y) { return yearCount[y]; });
+
+      // --- 2c. Count events per CATEGORY (categorised_reason) ---
+      const catCount = {};
+      rows.forEach(function (row) {
+        const cat = (row.categorised_reason || "").trim();
+        if (!cat) return;
+        catCount[cat] = (catCount[cat] || 0) + 1;
+      });
+
+      // Sort by count descending
+      const catSorted = Object.entries(catCount)
+        .sort(function (a, b) { return b[1] - a[1]; });
+      const catLabels = catSorted.map(function (e) { return e[0]; });
+      const catValues = catSorted.map(function (e) { return e[1]; });
+
+      // --- 2d. Sum DISPLACED people per SEVERITY level ---
+      const sevDisplaced = {};
+      rows.forEach(function (row) {
+        const sev = (row.Severity || "").trim();
+        const disp = parseFloat(row.Displaced) || 0;
+        if (!sev) return;
+        sevDisplaced[sev] = (sevDisplaced[sev] || 0) + disp;
+      });
+
+      // Severity labels in order: 1.0, 1.5, 2.0
+      const sevLabels = Object.keys(sevDisplaced).sort();
+      const sevValues = sevLabels.map(function (s) { return sevDisplaced[s]; });
+
+      // Nice severity labels for display
+      const sevDisplayLabels = sevLabels.map(function (s) {
+        if (s === "1.0") return "1.0 – Medium";
+        if (s === "1.5") return "1.5 – High";
+        if (s === "2.0") return "2.0 – Very High";
+        return s;
+      });
+
+      // ── Step 3: Draw the charts ────────────────────
+
+      // --- CHART 1: Top 20 countries (horizontal bar) ---
+      new Chart(document.getElementById("chartCountry"), {
+        type: "bar",
+        data: {
+          labels: countryLabels,
+          datasets: [{
+            label: "Flood events",
+            data: countryValues,
+            backgroundColor: "#2563eb"
+          }]
+        },
+        options: {
+          indexAxis: "y",            // horizontal bars
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { title: { display: true, text: "Number of events" } }
+          }
+        }
+      });
+
+      // --- CHART 2: Events per year (line chart) ---
+      new Chart(document.getElementById("chartYear"), {
+        type: "line",
+        data: {
+          labels: yearLabels,
+          datasets: [{
+            label: "Flood events",
+            data: yearValues,
+            borderColor: "#0891b2",
+            backgroundColor: "rgba(8,145,178,0.1)",
+            fill: true,
+            tension: 0.3,           // smooth curve
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { title: { display: true, text: "Year" } },
+            y: { title: { display: true, text: "Number of events" }, beginAtZero: true }
+          }
+        }
+      });
+
+      // --- CHART 3: Events by cause category ---
+      new Chart(document.getElementById("chartCategory"), {
+        type: "bar",
+        data: {
+          labels: catLabels,
+          datasets: [{
+            label: "Flood events",
+            data: catValues,
+            backgroundColor: [
+              "#2563eb", "#0891b2", "#059669",
+              "#d97706", "#dc2626", "#7c3aed", "#64748b"
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { title: { display: true, text: "Number of events" }, beginAtZero: true }
+          }
+        }
+      });
+
+      // --- CHART 4: Total displaced by severity ---
+      new Chart(document.getElementById("chartSeverity"), {
+        type: "bar",
+        data: {
+          labels: sevDisplayLabels,
+          datasets: [{
+            label: "People displaced",
+            data: sevValues,
+            backgroundColor: ["#f59e0b", "#ea580c", "#dc2626"]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              title: { display: true, text: "Total displaced" },
+              beginAtZero: true,
+              ticks: {
+                // Show big numbers in a readable way: "1.2M" instead of "1200000"
+                callback: function (value) {
+                  if (value >= 1000000) return (value / 1000000).toFixed(1) + "M";
+                  if (value >= 1000) return (value / 1000).toFixed(0) + "K";
+                  return value;
+                }
+              }
+            }
+          }
+        }
+      });
+
+    } // end of "complete" callback
+  }); // end of Papa.parse
+  </script>
+
+</body>
+</html>
