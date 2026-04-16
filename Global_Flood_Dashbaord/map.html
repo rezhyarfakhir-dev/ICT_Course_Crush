@@ -333,6 +333,58 @@
       font-weight: 600;
     }
 
+    /* ─── Column picker ────────────────────────────────────────── */
+    .col-picker {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .col-picker-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .col-picker-row label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+    .col-picker-row select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--teal);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      padding: 7px 10px;
+      appearance: none;
+      outline: none;
+      cursor: pointer;
+    }
+    .col-picker-row select option { background: var(--surface); }
+    .col-picker-note {
+      font-size: 10px;
+      color: var(--amber);
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 6px;
+      padding: 6px 10px;
+      line-height: 1.6;
+    }
+    .btn-apply {
+      width: 100%;
+      padding: 8px 14px;
+      background: var(--teal);
+      border: none;
+      border-radius: 8px;
+      color: #0d1117;
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-apply:hover { opacity: 0.85; }
+    #col-picker-section { display: none; }
+
     /* divider */
     .divider { height: 1px; background: var(--border); }
 
@@ -409,6 +461,29 @@
             </svg>
             Load built-in Flood Archive dataset
           </button>
+        </div>
+      </div>
+
+      <!-- Column picker — shown when auto-detect fails -->
+      <div id="col-picker-section">
+        <div class="divider"></div>
+        <div>
+          <div class="section-label">Map Columns</div>
+          <div class="col-picker-note">
+            Could not auto-detect lat/lng.<br/>
+            Please select the correct columns below.
+          </div>
+          <div class="col-picker" style="margin-top:8px;">
+            <div class="col-picker-row">
+              <label for="picker-lat">Latitude column</label>
+              <select id="picker-lat"></select>
+            </div>
+            <div class="col-picker-row">
+              <label for="picker-lng">Longitude column</label>
+              <select id="picker-lng"></select>
+            </div>
+            <button class="btn-apply" id="btn-apply-cols">Apply &amp; Plot Map</button>
+          </div>
         </div>
       </div>
 
@@ -654,13 +729,62 @@
     document.getElementById('stat-dead').textContent = fmtNum(dead);
   }
 
-  // ─── Detect lat/lng columns ──────────────────────────────────
+  // ─── Detect lat/lng columns (fuzzy, case-insensitive) ───────
   function detectLatLng(cols) {
-    const latNames = ['lat', 'latitude', 'Lat', 'LAT', 'LATITUDE', 'y', 'Y'];
-    const lngNames = ['long', 'lon', 'lng', 'longitude', 'Long', 'LON', 'LNG', 'LONGITUDE', 'x', 'X'];
-    latCol = cols.find(c => latNames.includes(c)) || null;
-    lngCol = cols.find(c => lngNames.includes(c)) || null;
+    // Try exact known names first (case-insensitive)
+    const latKeywords = ['lat', 'latitude', 'centroid_y', 'y_coord', 'ylat', 'geo_lat'];
+    const lngKeywords = ['long', 'lon', 'lng', 'longitude', 'centroid_x', 'x_coord', 'xlon', 'geo_lon', 'geo_long'];
+
+    const colsLower = cols.map(c => c.trim().toLowerCase());
+
+    // 1. Exact keyword match
+    let latIdx = colsLower.findIndex(c => latKeywords.includes(c));
+    let lngIdx = colsLower.findIndex(c => lngKeywords.includes(c));
+
+    // 2. Contains match (e.g. "centroid_lat", "point_longitude")
+    if (latIdx === -1) latIdx = colsLower.findIndex(c => c.includes('lat'));
+    if (lngIdx === -1) lngIdx = colsLower.findIndex(c => c.includes('lon') || c.includes('lng'));
+
+    // 3. Single-letter y/x as last resort
+    if (latIdx === -1) latIdx = colsLower.findIndex(c => c === 'y');
+    if (lngIdx === -1) lngIdx = colsLower.findIndex(c => c === 'x');
+
+    latCol = latIdx !== -1 ? cols[latIdx] : null;
+    lngCol = lngIdx !== -1 ? cols[lngIdx] : null;
     return latCol && lngCol;
+  }
+
+  // ─── Show column picker when auto-detect fails ───────────────
+  function showColumnPicker(cols, pendingRows, filename) {
+    const section = document.getElementById('col-picker-section');
+    const latSel = document.getElementById('picker-lat');
+    const lngSel = document.getElementById('picker-lng');
+
+    const opts = cols.map(c => `<option value="${c}">${c}</option>`).join('');
+    latSel.innerHTML = opts;
+    lngSel.innerHTML = opts;
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // One-time apply handler
+    const applyBtn = document.getElementById('btn-apply-cols');
+    const handler = function () {
+      latCol = latSel.value;
+      lngCol = lngSel.value;
+      if (latCol === lngCol) {
+        showToast('Latitude and Longitude must be different columns.', 'error');
+        return;
+      }
+      section.style.display = 'none';
+      applyBtn.removeEventListener('click', handler);
+      allRows = pendingRows;
+      populateFilters(pendingRows, cols);
+      renderMarkers(pendingRows);
+      if (pendingRows.length) map.setView([20, 10], 2);
+      setLoader(100);
+      showToast(`Loaded ${pendingRows.length.toLocaleString()} records from "${filename}"`);
+    };
+    applyBtn.addEventListener('click', handler);
   }
 
   // ─── Populate filter dropdowns ──────────────────────────────
@@ -765,12 +889,15 @@
         columns = result.meta.fields || [];
 
         if (!detectLatLng(columns)) {
-          showToast('Could not find lat/lng columns. Need columns named lat, long (or similar).', 'error');
+          // Auto-detect failed — show column picker instead of crashing
           setLoader(null);
+          showToast('Columns detected! Please select your lat/lng columns below.', 'ok');
+          showColumnPicker(columns, rows, filename);
           return;
         }
 
         allRows = rows;
+        document.getElementById('col-picker-section').style.display = 'none';
         populateFilters(rows, columns);
         renderMarkers(rows);
         if (rows.length) map.setView([20, 10], 2);
@@ -835,7 +962,9 @@
     document.getElementById('filter-cause').innerHTML = '<option value="">All causes</option>';
     document.getElementById('filter-severity').innerHTML = '<option value="">All severities</option>';
     document.getElementById('year-filter-row').style.display = 'none';
+    document.getElementById('col-picker-section').style.display = 'none';
     document.getElementById('empty-state').style.display = 'block';
+    latCol = null; lngCol = null;
     showToast('Map cleared.');
   });
 
